@@ -35,6 +35,8 @@ export const metadata: Metadata = {
   },
 };
 
+import Providers from "@/components/Providers";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -46,7 +48,7 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased scroll-smooth`}
     >
       <body className="min-h-full flex flex-col font-sans bg-slate-50 text-slate-900 antialiased selection:bg-slate-900 selection:text-white">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

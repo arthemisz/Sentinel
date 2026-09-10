@@ -85,3 +85,27 @@ func TestReporter_PrintCloudVerification(t *testing.T) {
 		t.Errorf("expected Confirmed verdict in output, got: %s", out)
 	}
 }
+
+func TestReporter_SetAndGetOutput(t *testing.T) {
+	var buf1 bytes.Buffer
+	var buf2 bytes.Buffer
+
+	rep := NewReporter(&buf1)
+	if rep.GetOutput() != &buf1 {
+		t.Errorf("expected buf1, got %v", rep.GetOutput())
+	}
+
+	rep.SetOutput(&buf2)
+	if rep.GetOutput() != &buf2 {
+		t.Errorf("expected buf2, got %v", rep.GetOutput())
+	}
+
+	rep.PrintBanner("1.0.0")
+	if buf1.Len() != 0 {
+		t.Errorf("expected buf1 to be empty after repointing output")
+	}
+	if buf2.Len() == 0 {
+		t.Errorf("expected buf2 to have banner content")
+	}
+}
+

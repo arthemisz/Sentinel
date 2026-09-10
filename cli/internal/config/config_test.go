@@ -63,3 +63,22 @@ func TestConfigManager_EnvOverride(t *testing.T) {
 		t.Errorf("expected env key %s, got %s", expectedKey, got)
 	}
 }
+
+func TestConfigManager_LogFile(t *testing.T) {
+	mgr := NewManager()
+	if got := mgr.GetLogFile(); got != "" {
+		t.Errorf("expected empty default log file, got %s", got)
+	}
+
+	mgr.SetLogFile("custom.log")
+	if got := mgr.GetLogFile(); got != "custom.log" {
+		t.Errorf("expected 'custom.log', got %s", got)
+	}
+
+	t.Setenv("SENTINEL_LOG_FILE", "env-override.log")
+	mgrEnv := NewManager()
+	if got := mgrEnv.GetLogFile(); got != "env-override.log" {
+		t.Errorf("expected env log file 'env-override.log', got %s", got)
+	}
+}
+

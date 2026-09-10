@@ -24,6 +24,23 @@ func NewReporter(out io.Writer) *Reporter {
 	return &Reporter{out: out}
 }
 
+// SetOutput updates the writer destination.
+func (r *Reporter) SetOutput(out io.Writer) {
+	if out == nil {
+		out = os.Stdout
+	}
+	r.out = out
+}
+
+// GetOutput returns the current output writer.
+func (r *Reporter) GetOutput() io.Writer {
+	if r.out == nil {
+		return os.Stdout
+	}
+	return r.out
+}
+
+
 // ExportJSON dumps the raw normalized scan payload directly into the target file in current working directory.
 func (r *Reporter) ExportJSON(payload *model.ScanPayload, exportTarget string) (string, error) {
 	filename := "sentinel-report.json"

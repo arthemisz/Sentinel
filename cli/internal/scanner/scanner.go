@@ -51,6 +51,11 @@ func NewScanner(version string, opts ...Option) *Scanner {
 		version:    version,
 	}
 
+	rustEngine := NewSentinelCoreEngine()
+	if rustEngine.Available() {
+		s.engines = append(s.engines, rustEngine)
+	}
+
 	for _, opt := range opts {
 		opt(s)
 	}

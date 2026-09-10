@@ -59,17 +59,17 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2">
               <li>
-                <Link href="#product-cli" className="hover:text-slate-900 transition">
+                <Link href="/#product-cli" className="hover:text-slate-900 transition">
                   Sentinel CLI
                 </Link>
               </li>
               <li>
-                <Link href="#product-cloud" className="hover:text-slate-900 transition">
+                <Link href="/#product-cloud" className="hover:text-slate-900 transition">
                   Cloud Platform
                 </Link>
               </li>
               <li>
-                <Link href="#product-ast" className="hover:text-slate-900 transition">
+                <Link href="/#product-ast" className="hover:text-slate-900 transition">
                   Taint Graph Engine
                 </Link>
               </li>

@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  githubId      String?   @unique
+  accounts      Account[]
+  sessions      Session[]
+  apiKeys       ApiKey[]
+  scans         Scan[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  key        String    @unique
+  prefix     String
+  userId     String
+  label      String?
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Scan {
+  id                String   @id @default(cuid())
+  userId            String
+  scanId            String   @unique
+  targetPath        String?
+  engineVersion     String?
+  status            String
+  filesScanned      Int      @default(0)
+  linesOfCode       Int      @default(0)
+  durationMs        Int      @default(0)
+  totalFindings     Int      @default(0)
+  confirmedFindings Int      @default(0)
+  filteredFindings  Int      @default(0)
+  gitBranch         String?
+  gitCommit         String?
+  gitRepository     String?
+  payload           Json?
+  createdAt         DateTime @default(now())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vulnerabilities   Vulnerability[]
+}
+
+model Vulnerability {
+  id              String   @id @default(cuid())
+  scanId          String
+  scan            Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  title           String
+  severity        String
+  filePath        String
+  line            Int
+  isExploitable   Boolean  @default(true)
+  confidence      String   @default("MEDIUM")
+  exploitScenario String?  @db.Text
+  remediation     String?  @db.Text
+  createdAt       DateTime @default(now())
+
+  @@index([scanId])
+}

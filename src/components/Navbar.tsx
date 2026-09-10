@@ -2,28 +2,23 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield,
   Terminal,
   Cloud,
   Code2,
-  Lock,
   ChevronDown,
   Briefcase,
   Users,
-  Compass,
   Newspaper,
-  Calendar,
-  Sparkles,
   ArrowRight,
   Menu,
   X,
   FileCheck2,
   Cpu,
   ShieldAlert,
-  User,
   Key,
   Copy,
   Check,
@@ -461,6 +456,7 @@ export default function Navbar({ onOpenDemo, onOpenSignIn }: NavbarProps) {
                 className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-sm font-medium transition shadow-sm"
               >
                 {session.user.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={session.user.image}
                     alt={session.user.name || "User"}
@@ -686,6 +682,7 @@ export default function Navbar({ onOpenDemo, onOpenSignIn }: NavbarProps) {
                 <div className="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
                   <div className="flex items-center gap-2.5">
                     {session.user.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={session.user.image}
                         alt={session.user.name || "User"}

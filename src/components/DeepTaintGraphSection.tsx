@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Cpu,
@@ -12,19 +12,14 @@ import {
   ShieldCheck,
   AlertTriangle,
   ArrowRight,
-  Layers,
   Zap,
-  Eye,
   FileCode,
   ChevronRight,
   Lock,
-  Server,
   Database,
   Terminal,
   ExternalLink,
   Activity,
-  GitPullRequest,
-  Check,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -367,8 +362,6 @@ function TaintFlowCanvas({
           hoveredNode === edge.source || hoveredNode === edge.target;
 
         // Calculate control points for curved edges
-        const dx = to.x - from.x;
-        const dy = to.y - from.y;
         const midX = (from.x + to.x) / 2;
         const midY = (from.y + to.y) / 2;
         const offset = isCall ? 40 : 0;
@@ -805,7 +798,6 @@ function AnimatedStat({
 
   useEffect(() => {
     if (!inView) return;
-    let start = 0;
     const duration = 1200;
     const startTime = performance.now();
     const animate = (now: number) => {

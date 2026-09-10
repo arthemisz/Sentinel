@@ -5,13 +5,10 @@ import { motion } from "framer-motion";
 import {
   ArrowRight,
   ShieldCheck,
-  Terminal,
   Check,
   Copy,
-  Sparkles,
   Zap,
   Lock,
-  GitPullRequest,
   Play,
 } from "lucide-react";
 import SplineScene from "./SplineScene";

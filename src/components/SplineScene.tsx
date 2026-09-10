@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
-import { Shield, Lock, Cpu, Server, Wifi, Activity } from "lucide-react";
+import { Lock, Cpu, Server, Wifi, Activity } from "lucide-react";
 
 // Dynamically import Spline to prevent SSR issues
 const Spline = dynamic(() => import("@splinetool/react-spline"), {

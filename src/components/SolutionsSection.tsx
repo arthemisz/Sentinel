@@ -6,10 +6,6 @@ import {
   ShieldAlert,
   Code2,
   CheckCircle,
-  TrendingDown,
-  Clock,
-  FileCheck,
-  Zap,
   ArrowRight,
 } from "lucide-react";
 

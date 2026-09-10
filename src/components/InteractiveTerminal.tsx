@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Terminal as TerminalIcon,
   Play,
@@ -108,21 +108,7 @@ export default function InteractiveTerminal() {
     }
   };
 
-  // Initial load
-  useEffect(() => {
-    fetchPrismaData();
-  }, []);
-
-  // Listen for custom trigger event from Navbar "Sentinel API CLI" button
-  useEffect(() => {
-    const handleTrigger = () => {
-      handleRun("sentinel scan --depth=full");
-    };
-    window.addEventListener("sentinel-run-cli", handleTrigger);
-    return () => window.removeEventListener("sentinel-run-cli", handleTrigger);
-  }, [selectedScanId]);
-
-  const handleRun = async (cmd: string, scanIdToUse?: string) => {
+  const handleRun = useCallback(async (cmd: string, scanIdToUse?: string) => {
     setActiveCommand(cmd);
     setRunning(true);
     setLoadingStep("Authenticating session with Sentinel Cloud & parsing AST taint graphs...");
@@ -166,7 +152,47 @@ export default function InteractiveTerminal() {
         setLoadingStep("");
       }, 900);
     }
-  };
+  }, [selectedScanId]);
+
+  // Initial load
+  useEffect(() => {
+    let ignore = false;
+    const loadInitial = async () => {
+      try {
+        const res = await fetch("/api/scan?public=true");
+        if (res.ok) {
+          const data = await res.json();
+          if (ignore) return;
+          if (data?.scan) {
+            setScanData(data.scan);
+            setSelectedScanId(data.scan.id);
+            if (Array.isArray(data.vulnerabilities) && data.vulnerabilities.length > 0) {
+              setVulnerabilities(data.vulnerabilities);
+              setExpandedVulnId(data.vulnerabilities[0].id);
+            }
+          }
+          if (Array.isArray(data?.availableScans)) {
+            setAvailableScans(data.availableScans);
+          }
+        }
+      } catch (err) {
+        console.warn("[InteractiveTerminal] Notice fetching Prisma scans:", err);
+      }
+    };
+    void loadInitial();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  // Listen for custom trigger event from Navbar "Sentinel API CLI" button
+  useEffect(() => {
+    const handleTrigger = () => {
+      handleRun("sentinel scan --depth=full");
+    };
+    window.addEventListener("sentinel-run-cli", handleTrigger);
+    return () => window.removeEventListener("sentinel-run-cli", handleTrigger);
+  }, [handleRun]);
 
   const handleCopyCmd = () => {
     navigator.clipboard?.writeText(activeCommand);

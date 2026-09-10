@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Shield, Terminal, Heart, CheckCircle2, Globe } from "lucide-react";
+import { Shield } from "lucide-react";
 
 export default function Footer() {
   return (

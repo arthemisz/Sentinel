@@ -6,8 +6,6 @@ import {
   X,
   Shield,
   CheckCircle2,
-  Calendar,
-  Sparkles,
   ArrowRight,
   Lock,
 } from "lucide-react";

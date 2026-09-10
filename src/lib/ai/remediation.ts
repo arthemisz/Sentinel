@@ -1,4 +1,4 @@
-﻿import Anthropic from "@anthropic-ai/sdk";
+import Anthropic from "@anthropic-ai/sdk";
 
 export interface VulnerabilityMetadata {
   id?: string;
@@ -15,7 +15,6 @@ export interface VulnerabilityMetadata {
   taintSink?: string;
   codeSnippet?: string;
   engine?: string;
-  [key: string]: any;
 }
 
 export interface RemediationResult {
@@ -41,7 +40,7 @@ function stripMarkdownFences(text: string): string {
 /**
  * Resilient deterministic fallback in case LLM API calls fail, timeout, or key is missing.
  */
-export function getFallbackRemediation(vuln: any): RemediationResult {
+export function getFallbackRemediation(vuln: VulnerabilityMetadata): RemediationResult {
   const cwe = String(vuln?.cwe || "").toLowerCase();
   const title = String(vuln?.title || vuln?.category || "").toLowerCase();
   const sink = String(vuln?.taintSink || "").toLowerCase();
@@ -128,7 +127,7 @@ export function getFallbackRemediation(vuln: any): RemediationResult {
  * Analyzes an individual vulnerability finding using Claude 3.5 Sonnet via @anthropic-ai/sdk.
  * Falls back safely if API is unavailable, times out, or returns malformed data.
  */
-export async function analyzeVulnerability(vuln: any): Promise<RemediationResult> {
+export async function analyzeVulnerability(vuln: VulnerabilityMetadata): Promise<RemediationResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN;
 
   // If no valid Anthropic key provided, return intelligent deterministic fallback immediately
@@ -174,8 +173,9 @@ export async function analyzeVulnerability(vuln: any): Promise<RemediationResult
     }
 
     return getFallbackRemediation(vuln);
-  } catch (error: any) {
-    console.warn(`[Sentinel AI Remediation] LLM call notice for finding ${vuln?.title || vuln?.cwe || "item"}: ${error?.message || error}. Using fallback remediation.`);
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.warn(`[Sentinel AI Remediation] LLM call notice for finding ${vuln?.title || vuln?.cwe || "item"}: ${errorMsg}. Using fallback remediation.`);
     return getFallbackRemediation(vuln);
   }
 }
@@ -184,7 +184,7 @@ export async function analyzeVulnerability(vuln: any): Promise<RemediationResult
  * Batches vulnerability items into chunks (default 4 items) processed concurrently via Promise.all.
  */
 export async function batchAnalyzeVulnerabilities(
-  items: any[],
+  items: VulnerabilityMetadata[],
   batchSize: number = 4
 ): Promise<RemediationResult[]> {
   const results: RemediationResult[] = [];

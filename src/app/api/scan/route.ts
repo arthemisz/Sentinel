@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
         revokedAt: null,
       },
     });
-  } catch (dbError: any) {
+  } catch (dbError: unknown) {
     console.error("[Sentinel API Key Lookup Error]:", dbError);
     return NextResponse.json(
       { success: false, error: "Internal Server Error: Database unavailable" },
@@ -259,7 +259,7 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Sentinel Ingestion Error]:", error);
     const message = error instanceof Error ? error.message : "Failed to process scan payload";
     return NextResponse.json(

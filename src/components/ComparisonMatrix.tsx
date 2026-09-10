@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Check, X, Sparkles, Shield, AlertCircle } from "lucide-react";
+import { Check, X, Shield } from "lucide-react";
 
 export default function ComparisonMatrix() {
   const comparisonRows = [

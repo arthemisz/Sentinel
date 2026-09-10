@@ -21,6 +21,8 @@ const (
 	KeyAPIKey = "api_key"
 	KeyAPIURL = "api_url"
 	KeyOrgID  = "organization_id"
+	KeyGitHubPAT = "github_pat"
+	KeyLogFile = "log_file"
 )
 
 // Manager encapsulates Viper-backed configuration lifecycle.
@@ -133,3 +135,24 @@ func (m *Manager) Save() error {
 func (m *Manager) ConfigPath() string {
 	return m.configPath
 }
+
+// GetGitHubPAT retrieves the stored GitHub PAT.
+func (m *Manager) GetGitHubPAT() string {
+	return strings.TrimSpace(m.v.GetString(KeyGitHubPAT))
+}
+
+// SetGitHubPAT sets the GitHub PAT in viper state.
+func (m *Manager) SetGitHubPAT(pat string) {
+	m.v.Set(KeyGitHubPAT, strings.TrimSpace(pat))
+}
+
+// GetLogFile retrieves the stored log file path.
+func (m *Manager) GetLogFile() string {
+	return strings.TrimSpace(m.v.GetString(KeyLogFile))
+}
+
+// SetLogFile sets the log file path in viper state.
+func (m *Manager) SetLogFile(path string) {
+	m.v.Set(KeyLogFile, strings.TrimSpace(path))
+}
+

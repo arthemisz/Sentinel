@@ -27,6 +27,11 @@ func TestNewRootCmd_StructureAndFlags(t *testing.T) {
 	if rootCmd.PersistentFlags().Lookup("api-url") == nil {
 		t.Errorf("expected --api-url flag")
 	}
+	if logFlag := rootCmd.PersistentFlags().Lookup("log-file"); logFlag == nil {
+		t.Errorf("expected --log-file flag")
+	} else if logFlag.NoOptDefVal != "sentinel.log" {
+		t.Errorf("expected --log-file NoOptDefVal to be 'sentinel.log', got '%s'", logFlag.NoOptDefVal)
+	}
 
 	// Verify subcommands registered
 	foundLogin := false

@@ -11,7 +11,7 @@ cli/
 ├── cmd/
 │   ├── sentinel/
 │   │   └── main.go       # Compiled binary entrypoint (enforces non-zero exit codes)
-│   ├── root.go           # Root command with persistent flags (--export=json, --config, --api-url)
+│   ├── root.go           # Root command with persistent flags (--export=json, --log-file, --config, --api-url)
 │   ├── root_test.go      # Root command and flag unit tests
 │   ├── login.go          # Interactive developer credential authentication
 │   ├── login_test.go     # Login unit tests
@@ -21,6 +21,9 @@ cli/
     ├── config/           # Local credential persistence via Viper
     │   ├── config.go
     │   └── config_test.go
+    ├── logger/           # Thread-safe execution file logger & output streaming
+    │   ├── logger.go
+    │   └── logger_test.go
     ├── model/            # Strictly typed SAST payloads and verification models
     │   └── payload.go
     ├── scanner/          # AST taint analysis & os/exec process orchestration
@@ -40,6 +43,7 @@ cli/
 ## Features
 
 - **Cobra Command Structure with `RunE`**: Every command returns explicit errors to the root command, ensuring non-zero exit codes for seamless CI/CD pipeline blocking.
+- **File Logging (`--log-file`)**: Thread-safe execution logging with ISO 8601 timestamps, log levels (`[INFO]`, `[WARN]`, `[ERROR]`, `[DEBUG]`), and full terminal output mirroring to disk (`sentinel.log` or custom path).
 - **Viper Credential Persistence**: `sentinel login` prompts developers for their API key and securely persists credentials in `~/.sentinel/config.yaml` (with strict 0600 permissions).
 - **Process Orchestration (`os/exec`)**: Seamlessly invokes underlying deterministic security scanning engines and VCS tools (`git`).
 - **Concurrent File Parsing**: Traverses target directories using worker goroutines and worker pools for sub-second analysis of large codebases.
@@ -74,7 +78,16 @@ sentinel scan .
 sentinel scan . --export=json
 ```
 
-### 4. CI/CD Pipeline Security Gate
+### 4. File Logging
+```bash
+# Generate execution log file (defaults to sentinel.log)
+sentinel scan . --log-file
+
+# Specify custom log file destination
+sentinel scan . --log-file=audit.log
+```
+
+### 5. CI/CD Pipeline Security Gate
 ```bash
 # Fail CI build if any High or Critical vulnerabilities are confirmed
 sentinel scan . --fail-on=high
@@ -85,3 +98,4 @@ sentinel scan . --fail-on=high
 ```bash
 go test -v ./...
 ```
+

@@ -39,3 +39,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Go build & report artifacts
+cli/sentinel.exe
+cli/*.exe
+*.exe
+cli/sentinel-report.json
+sentinel-report.json
+*.log
+# Rust & local artifacts
+sentinel-core/target/
+**/target/
+scratch/
+

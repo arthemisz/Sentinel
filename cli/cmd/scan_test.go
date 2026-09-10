@@ -170,3 +170,92 @@ func TestScanCmd_CloudTransmissionAndSecurityGate(t *testing.T) {
 		t.Fatalf("expected pass with --fail-on=none, got: %v", errPass)
 	}
 }
+
+func TestScanCmd_LogFileFlag(t *testing.T) {
+	tempDir := t.TempDir()
+	origWd, _ := os.Getwd()
+	defer os.Chdir(origWd)
+	_ = os.Chdir(tempDir)
+
+	testFile := filepath.Join(tempDir, "script.py")
+	_ = os.WriteFile(testFile, []byte("import os\nos.system(user_input)\n"), 0644)
+
+	var out bytes.Buffer
+	cfgMgr := config.NewManager()
+	opts := &RootOptions{
+		ConfigMgr: cfgMgr,
+		Reporter:  reporter.NewReporter(&out),
+	}
+
+	cmd := NewScanCmd(opts)
+	cmd.SetOut(&out)
+	logPath := filepath.Join(tempDir, "execution.log")
+	cmd.SetArgs([]string{tempDir, "--export=report.json", "--log-file=" + logPath})
+
+	err := cmd.Execute()
+	if err != nil {
+		t.Fatalf("unexpected error executing scan with --log-file: %v", err)
+	}
+
+	// Verify log file exists
+	if _, err := os.Stat(logPath); os.IsNotExist(err) {
+		t.Fatalf("expected log file %s to exist", logPath)
+	}
+
+	content, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("failed reading log file: %v", err)
+	}
+
+	strContent := string(content)
+	if !strings.Contains(strContent, "[INFO]") {
+		t.Errorf("expected log file to contain '[INFO]', got: %s", strContent)
+	}
+	if !strings.Contains(strContent, "Scanning target") {
+		t.Errorf("expected log file to contain 'Scanning target', got: %s", strContent)
+	}
+	if !strings.Contains(strContent, "Report exported to JSON") {
+		t.Errorf("expected log file to contain 'Report exported to JSON', got: %s", strContent)
+	}
+}
+
+func TestScanCmd_DefaultLogFile(t *testing.T) {
+	tempDir := t.TempDir()
+	origWd, _ := os.Getwd()
+	defer os.Chdir(origWd)
+	_ = os.Chdir(tempDir)
+
+	testFile := filepath.Join(tempDir, "test.py")
+	_ = os.WriteFile(testFile, []byte("import subprocess\nsubprocess.Popen(cmd)\n"), 0644)
+
+	var out bytes.Buffer
+	cfgMgr := config.NewManager()
+	opts := &RootOptions{
+		ConfigMgr: cfgMgr,
+		Reporter:  reporter.NewReporter(&out),
+	}
+
+	cmd := NewScanCmd(opts)
+	cmd.SetOut(&out)
+	cmd.SetArgs([]string{tempDir, "--export=report.json", "--log-file"})
+
+	err := cmd.Execute()
+	if err != nil {
+		t.Fatalf("unexpected error executing scan with default --log-file: %v", err)
+	}
+
+	defaultLog := filepath.Join(tempDir, "sentinel.log")
+	if _, err := os.Stat(defaultLog); os.IsNotExist(err) {
+		t.Fatalf("expected default log file %s to exist", defaultLog)
+	}
+
+	content, err := os.ReadFile(defaultLog)
+	if err != nil {
+		t.Fatalf("failed reading default log file: %v", err)
+	}
+
+	if len(content) == 0 {
+		t.Errorf("expected default log file to not be empty")
+	}
+}
+

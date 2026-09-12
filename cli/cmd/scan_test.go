@@ -259,3 +259,102 @@ func TestScanCmd_DefaultLogFile(t *testing.T) {
 	}
 }
 
+func TestScanCmd_RealTimeStageDiagnostics(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// Add valid source file
+	appFile := filepath.Join(tempDir, "app.js")
+	_ = os.WriteFile(appFile, []byte("const id = req.query.id;\ndb.query('SELECT ' + id);\n"), 0644)
+
+	// Add vendor / ignored directory that should NOT be parsed
+	nmDir := filepath.Join(tempDir, "node_modules", "package")
+	_ = os.MkdirAll(nmDir, 0755)
+	_ = os.WriteFile(filepath.Join(nmDir, "bloat.js"), []byte("const evil = req.query.x;\ndb.query(evil);\n"), 0644)
+
+	// Mock server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := model.CloudScanResponse{
+			Success:    true,
+			ScanID:     "scn_stages_test",
+			Status:     "COMPLETED",
+			VerifiedAt: time.Now().UTC().Format(time.RFC3339),
+			Summary: model.VerificationSummary{
+				TotalCandidatePaths:    1,
+				ConfirmedTruePositives: 1,
+			},
+			TaintGraph: model.TaintGraphMetrics{
+				NodesEvaluated:            10,
+				EdgesTraversed:            20,
+				TraversalDurationMs:       15,
+				LLMVerificationDurationMs: 120,
+			},
+			Findings: []model.VerifiedFinding{
+				{
+					Finding: model.Finding{
+						ID:          "CWE-89-1",
+						Category:    "Injection",
+						Title:       "SQL Injection",
+						CWE:         "CWE-89",
+						Severity:    model.SeverityMedium,
+						FilePath:    "app.js",
+						LineNumber:  2,
+						TaintSource: "req.query.id",
+						TaintSink:   "db.query()",
+					},
+					Verdict:    "CONFIRMED_TRUE_POSITIVE",
+					Confidence: 0.99,
+				},
+			},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	var out bytes.Buffer
+	cfgMgr := config.NewManager()
+	cfgMgr.SetAPIKey("snt_test_key_diagnostics")
+	cfgMgr.SetAPIURL(server.URL)
+
+	opts := &RootOptions{
+		ConfigMgr: cfgMgr,
+		Reporter:  reporter.NewReporter(&out),
+	}
+
+	cmd := NewScanCmd(opts)
+	cmd.SetOut(&out)
+	cmd.SetArgs([]string{tempDir, "--fail-on=critical"})
+
+	err := cmd.Execute()
+	if err != nil {
+		t.Fatalf("unexpected scan error: %v", err)
+	}
+
+	outStr := out.String()
+
+	// Verify all 4 stages are executed with checkmarks and millisecond durations
+	expectedStages := []string{
+		"[✓] [1/4] Cloning repository shallowly (depth=1)...",
+		"[✓] [2/4] Parsing AST & constructing graph layers (Tree-sitter & Rust)...",
+		"[✓] [3/4] Tracing taint flows & verifying via Claude 3.5 Sonnet...",
+		"[✓] [4/4] Synchronizing scan records to Prisma database...",
+	}
+
+	for _, expected := range expectedStages {
+		if !strings.Contains(outStr, expected) {
+			t.Errorf("expected output to contain %q, output was:\n%s", expected, outStr)
+		}
+	}
+
+	// Verify milestone durations in ms are present
+	if !strings.Contains(outStr, "(0ms)") && !strings.Contains(outStr, "ms)") {
+		t.Errorf("expected milestone durations in ms in output, got:\n%s", outStr)
+	}
+
+	// Verify only app.js was indexed and node_modules was ignored
+	if strings.Contains(outStr, "Indexed 2 files") {
+		t.Errorf("expected node_modules to be skipped (only 1 file indexed)")
+	}
+}
+
+

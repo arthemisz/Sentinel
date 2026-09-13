@@ -175,6 +175,22 @@ impl SentinelEngine {
         {
             if entry.file_type().is_file() {
                 let p = entry.path();
+                if let Some(name) = p.file_name().and_then(|x| x.to_str()) {
+                    let lower = name.to_lowercase();
+                    if lower.ends_with(".min.js")
+                        || lower.ends_with(".bundle.js")
+                        || lower == "bundle.js"
+                        || lower.ends_with(".map")
+                        || lower.ends_with(".lock")
+                        || lower.ends_with(".json")
+                        || lower.ends_with(".svg")
+                        || lower.ends_with(".png")
+                        || lower.ends_with(".jpg")
+                        || lower.ends_with(".md")
+                    {
+                        continue;
+                    }
+                }
                 if let Some(ext) = p.extension().and_then(|x| x.to_str()) {
                     match ext.to_lowercase().as_str() {
                         "js" | "jsx" | "ts" | "tsx" | "py" | "go" => files.push(p.to_path_buf()),
@@ -188,8 +204,9 @@ impl SentinelEngine {
 
     fn is_ignored_directory(path: &Path) -> bool {
         if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+            let lower = name.to_lowercase();
             matches!(
-                name,
+                lower.as_str(),
                 ".git"
                     | "node_modules"
                     | "target"
@@ -200,7 +217,10 @@ impl SentinelEngine {
                     | ".venv"
                     | "__pycache__"
                     | "scratch"
-            )
+                    | "coverage"
+                    | "out"
+                    | ".turbo"
+            ) || (name.starts_with('.') && name != ".")
         } else {
             false
         }

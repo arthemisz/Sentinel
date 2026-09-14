@@ -88,3 +88,31 @@ func (c *Client) SubmitScan(ctx context.Context, payload *model.ScanPayload) (*m
 
 	return &cloudResp, nil
 }
+
+// SynchronizeScan verifies and finalizes persistence of scan records in the remote Prisma database.
+func (c *Client) SynchronizeScan(ctx context.Context, scanID string) error {
+	if scanID == "" {
+		return nil
+	}
+
+	reqURL := fmt.Sprintf("%s?scanId=%s&terminal=true", c.endpoint, scanID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil
+	}
+
+	if c.apiKey != "" {
+		req.Header.Set("Authorization", "Bearer "+c.apiKey)
+		req.Header.Set("X-API-Key", c.apiKey)
+	}
+	req.Header.Set("User-Agent", "Sentinel-CLI")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+

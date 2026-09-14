@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -12,8 +11,8 @@ import (
 	"github.com/sentinel-sast/sentinel/cli/internal/client"
 	"github.com/sentinel-sast/sentinel/cli/internal/model"
 	"github.com/sentinel-sast/sentinel/cli/internal/remote"
-	"github.com/sentinel-sast/sentinel/cli/internal/reporter"
 	"github.com/sentinel-sast/sentinel/cli/internal/scanner"
+	"github.com/sentinel-sast/sentinel/cli/pkg/git"
 	"github.com/sentinel-sast/sentinel/cli/pkg/ui"
 )
 
@@ -30,47 +29,29 @@ func handleRemoteScan(cmd *cobra.Command, opts *RootOptions, scanOpts *ScanOptio
 func executeScan(cmd *cobra.Command, opts *RootOptions, scanOpts *ScanOptions, targetDir string) error {
 	out := cmd.OutOrStdout()
 
-	// Initialize the live Knight ASCII progress indicator
+	// Initialize the live Knight ASCII progress indicator as sole visual renderer
 	kp := ui.NewKnightProgressWithWriter(out)
 	kp.Update(0.0, "Initializing scan environment...")
 
-	indicator := reporter.NewStageIndicator(out)
-
-	// Stage 1: Git clone or local directory bypass
-	stage1Msg := "[1/4] Cloning repository shallowly (depth=1)..."
-	indicator.Start(stage1Msg)
+	depth := 1
+	stage1Msg := fmt.Sprintf("[1/4] Cloning repository shallowly (depth=%d)...", depth)
 	kp.Update(5.0, stage1Msg)
 
-	var scanTarget string
-	var cleanupFunc func()
 	var gitRepoURL string
+	var token string
 
-	// If the target is already a local directory path, bypass Git entirely and scan directly
-	if fi, err := os.Stat(targetDir); err == nil && fi.IsDir() {
-		absTarget, err := filepath.Abs(targetDir)
-		if err != nil {
-			indicator.Error(err)
-			kp.Complete("Failed resolving target path")
-			return fmt.Errorf("failed resolving target path '%s': %w", targetDir, err)
-		}
-		scanTarget = absTarget
-		cleanupFunc = func() {}
-		indicator.Success(0)
-		kp.Update(15.0, "Target directory verified")
-	} else if remote.IsGitHubURL(targetDir) {
+	if remote.IsGitHubURL(targetDir) {
 		repoInfo, err := remote.ParseGitHubURL(targetDir)
 		if err != nil {
-			indicator.Error(err)
 			kp.Complete("Invalid GitHub URL")
 			return fmt.Errorf("failed to parse github url: %w", err)
 		}
 		gitRepoURL = repoInfo.FullURL
-		token := opts.ConfigMgr.GetGitHubPAT()
+		token = opts.ConfigMgr.GetGitHubPAT()
 
 		ctx := cmd.Context()
 		isPrivate, err := remote.CheckRepoVisibilityWithToken(ctx, repoInfo.Owner, repoInfo.Repo, token)
 		if err == nil && isPrivate && token == "" {
-			indicator.Stop()
 			fmt.Fprint(out, "[!] Private repository detected. Enter GitHub Personal Access Token: ")
 			reader := bufio.NewReader(os.Stdin)
 			input, err := reader.ReadString('\n')
@@ -79,58 +60,79 @@ func executeScan(cmd *cobra.Command, opts *RootOptions, scanOpts *ScanOptions, t
 			}
 			token = strings.TrimSpace(input)
 			opts.ConfigMgr.SetGitHubPAT(token)
-			indicator.Start(stage1Msg)
 			kp.Update(5.0, stage1Msg)
 		}
-
-		cloneRes, err := remote.CloneRepository(ctx, repoInfo.CloneURL, token)
-		if err != nil {
-			indicator.Error(err)
-			kp.Complete("Failed cloning repository")
-			opts.Logger.Errorf("Failed to clone repository: %v", err)
-			return fmt.Errorf("failed to clone repository: %w", err)
-		}
-		scanTarget = cloneRes.TempDir
-		cleanupFunc = cloneRes.CleanupFunc
-		indicator.Success()
-		kp.Update(15.0, "Repository cloned shallowly")
-	} else {
-		absTarget, err := filepath.Abs(targetDir)
-		if err != nil {
-			indicator.Error(err)
-			kp.Complete("Failed resolving target path")
-			return fmt.Errorf("failed resolving target path '%s': %w", targetDir, err)
-		}
-		scanTarget = absTarget
-		cleanupFunc = func() {}
-		indicator.Success(0)
-		kp.Update(15.0, "Target directory verified")
 	}
 
-	if cleanupFunc != nil {
-		defer cleanupFunc()
+	stage1Start := time.Now()
+	var targetPath string
+	var isTemp bool
+
+	// Run clone in background goroutine to decouple execution from UI progress loop
+	errChan := make(chan error, 1)
+	go func() {
+		var err error
+		targetPath, isTemp, err = git.PrepareTarget(cmd.Context(), targetDir, git.CloneOptions{
+			Depth:     depth,
+			AuthToken: token,
+		})
+		errChan <- err
+	}()
+
+	// Smoothly advance progress from 5% to 24% while waiting for the clone to finish
+	pct := 5.0
+	ticker := time.NewTicker(150 * time.Millisecond)
+	defer ticker.Stop()
+
+	cloneDone := false
+	for !cloneDone {
+		select {
+		case err := <-errChan:
+			if err != nil {
+				kp.Complete(fmt.Sprintf("Git clone failed: %v", err))
+				return err
+			}
+			cloneDone = true
+		case <-ticker.C:
+			if pct < 24.0 {
+				pct += 0.5 // Keep knight filling upward while download streams
+				kp.Update(pct, stage1Msg)
+			}
+		}
 	}
+
+	if isTemp {
+		defer os.RemoveAll(targetPath)
+	}
+
+	scanTarget := targetPath
+	stage1Duration := time.Since(stage1Start).Milliseconds()
+	if !isTemp {
+		stage1Duration = 0
+	}
+
+	// Stage 1 Done: Instantly advance to 25%
+	kp.Update(25.0, "[1/4] Repository clone complete. Mapping files...")
 
 	opts.Logger.Infof("Initializing Sentinel SAST Engine v%s", Version)
 	opts.Logger.Infof("Scanning target: %s", scanTarget)
 
 	// Stage 2: AST Parsing & Graph Construction
+	stage2Start := time.Now()
 	stage2Msg := "[2/4] Parsing AST & constructing graph layers (Tree-sitter & Rust)..."
-	indicator.Start(stage2Msg)
-	kp.Update(20.0, "Collecting target source files...")
+	kp.Update(25.0, stage2Msg)
 
 	scanEngine := scanner.NewScanner(Version,
 		scanner.WithWorkers(scanOpts.Workers),
 		scanner.WithProgress(func(current, total int, loc int64, currentFile string) {
 			if total > 0 {
-				pct := 20.0 + (float64(current)/float64(total))*45.0
+				pct := 25.0 + (float64(current)/float64(total))*40.0
 				kp.Update(pct, fmt.Sprintf("Parsing AST [%d/%d files] (%d LOC)", current, total, loc))
 			}
 		}),
 	)
 	payload, err := scanEngine.ScanDirectory(cmd.Context(), scanTarget)
 	if err != nil {
-		indicator.Error(err)
 		kp.Complete("Scan failed")
 		opts.Logger.Errorf("Scan failed: %v", err)
 		return fmt.Errorf("scan failed: %w", err)
@@ -139,7 +141,7 @@ func executeScan(cmd *cobra.Command, opts *RootOptions, scanOpts *ScanOptions, t
 	if gitRepoURL != "" {
 		payload.Git.Repository = gitRepoURL
 	}
-	indicator.Success()
+	stage2Duration := time.Since(stage2Start).Milliseconds()
 	kp.Update(68.0, fmt.Sprintf("Indexed %d files (%d LOC) — 5-layer graph ready", payload.Stats.FilesScanned, payload.Stats.LinesOfCode))
 
 	opts.Logger.Infof("Indexed %d files (%d LOC) in %dms; %d candidate taint paths identified",
@@ -153,6 +155,8 @@ func executeScan(cmd *cobra.Command, opts *RootOptions, scanOpts *ScanOptions, t
 
 	if exportFlag != "" {
 		kp.Complete("Report exported to JSON locally")
+		fmt.Fprintf(out, "[✓] [1/4] Cloning repository shallowly (depth=%d)... (%dms)\n", depth, stage1Duration)
+		fmt.Fprintf(out, "[✓] [2/4] Parsing AST & constructing graph layers (Tree-sitter & Rust)... (%dms)\n", stage2Duration)
 		opts.Reporter.PrintScanSummary(payload)
 		exportPath, err := opts.Reporter.ExportJSON(payload, exportFlag)
 		if err != nil {
@@ -176,31 +180,35 @@ func executeScan(cmd *cobra.Command, opts *RootOptions, scanOpts *ScanOptions, t
 	opts.Logger.Infof("Transmitting payload to Sentinel Cloud: %s", apiURL)
 
 	// Stage 3: Tracing taint flows & verifying via Claude 3.5 Sonnet
+	stage3Start := time.Now()
 	stage3Msg := "[3/4] Tracing taint flows & verifying via Claude 3.5 Sonnet..."
-	indicator.Start(stage3Msg)
 	kp.Update(75.0, stage3Msg)
 
 	c := client.NewClient(apiURL, apiKey, 60*time.Second)
 	resp, err := c.SubmitScan(cmd.Context(), payload)
 	if err != nil {
-		indicator.Error(err)
 		kp.Complete("Cloud verification failed")
 		opts.Logger.Errorf("Cloud verification failed: %v", err)
 		return fmt.Errorf("cloud verification failed: %w", err)
 	}
-	indicator.Success()
+	stage3Duration := time.Since(stage3Start).Milliseconds()
 	kp.Update(90.0, fmt.Sprintf("Cloud verification complete: %d verified findings", len(resp.Findings)))
 
 	// Stage 4: Synchronizing scan records to Prisma database
+	stage4Start := time.Now()
 	stage4Msg := "[4/4] Synchronizing scan records to Prisma database..."
-	indicator.Start(stage4Msg)
 	kp.Update(95.0, stage4Msg)
 
 	if err := c.SynchronizeScan(cmd.Context(), resp.ScanID); err != nil {
 		opts.Logger.Warnf("Prisma synchronization check warning: %v", err)
 	}
-	indicator.Success()
+	stage4Duration := time.Since(stage4Start).Milliseconds()
 	kp.Complete(fmt.Sprintf("Scan completed — %d verified findings", len(resp.Findings)))
+
+	fmt.Fprintf(out, "[✓] [1/4] Cloning repository shallowly (depth=%d)... (%dms)\n", depth, stage1Duration)
+	fmt.Fprintf(out, "[✓] [2/4] Parsing AST & constructing graph layers (Tree-sitter & Rust)... (%dms)\n", stage2Duration)
+	fmt.Fprintf(out, "[✓] [3/4] Tracing taint flows & verifying via Claude 3.5 Sonnet... (%dms)\n", stage3Duration)
+	fmt.Fprintf(out, "[✓] [4/4] Synchronizing scan records to Prisma database... (%dms)\n", stage4Duration)
 
 	opts.Reporter.PrintScanSummary(payload)
 	opts.Logger.Infof("Cloud verification complete: %d verified findings (status: %s)", len(resp.Findings), resp.Status)

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -354,6 +355,49 @@ func TestScanCmd_RealTimeStageDiagnostics(t *testing.T) {
 	// Verify only app.js was indexed and node_modules was ignored
 	if strings.Contains(outStr, "Indexed 2 files") {
 		t.Errorf("expected node_modules to be skipped (only 1 file indexed)")
+	}
+}
+
+func TestScanCmd_BackgroundClonePulsing(t *testing.T) {
+	tempDir := t.TempDir()
+	origWd, _ := os.Getwd()
+	defer os.Chdir(origWd)
+	_ = os.Chdir(tempDir)
+
+	// Create a local git repo
+	repoDir := t.TempDir()
+	_ = exec.Command("git", "init", repoDir).Run()
+	_ = exec.Command("git", "-C", repoDir, "config", "user.email", "test@sentinel.dev").Run()
+	_ = exec.Command("git", "-C", repoDir, "config", "user.name", "Sentinel").Run()
+	testFile := filepath.Join(repoDir, "app.py")
+	_ = os.WriteFile(testFile, []byte("import os\nprint('hello')\n"), 0644)
+	_ = exec.Command("git", "-C", repoDir, "add", "app.py").Run()
+	_ = exec.Command("git", "-C", repoDir, "commit", "-m", "initial commit").Run()
+
+	cfgMgr := config.NewManager()
+	var out bytes.Buffer
+
+	opts := &RootOptions{
+		Export:    "test-report.json",
+		ConfigMgr: cfgMgr,
+		Reporter:  reporter.NewReporter(&out),
+	}
+
+	cmd := NewScanCmd(opts)
+	cmd.SetOut(&out)
+	cmd.SetArgs([]string{repoDir, "--export=test-report.json"})
+
+	err := cmd.Execute()
+	if err != nil {
+		t.Fatalf("unexpected scan error on git repo: %v", err)
+	}
+
+	outStr := out.String()
+	if !strings.Contains(outStr, "[SENTINEL CORE]") {
+		t.Errorf("expected output to contain [SENTINEL CORE]")
+	}
+	if !strings.Contains(outStr, "Repository clone complete") && !strings.Contains(outStr, "100%") {
+		t.Errorf("expected output to show progress completion")
 	}
 }
 

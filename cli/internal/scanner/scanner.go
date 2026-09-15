@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/sentinel-sast/sentinel/cli/internal/model"
+	"github.com/sentinel-sast/sentinel/cli/pkg/analyzer"
 )
 
 // Scanner coordinates concurrent file parsing, AST taint flow analysis, and process orchestration.
@@ -21,6 +22,7 @@ type Scanner struct {
 	engines    []DeterministicEngine
 	numWorkers int
 	version    string
+	progressFn ProgressFunc
 }
 
 // Option configures Scanner parameters.
@@ -39,6 +41,16 @@ func WithWorkers(workers int) Option {
 func WithEngine(engine DeterministicEngine) Option {
 	return func(s *Scanner) {
 		s.engines = append(s.engines, engine)
+	}
+}
+
+// ProgressFunc reports scanning progress as files are analyzed.
+type ProgressFunc func(current, total int, loc int64, currentFile string)
+
+// WithProgress registers a live progress callback invoked as files are parsed.
+func WithProgress(fn ProgressFunc) Option {
+	return func(s *Scanner) {
+		s.progressFn = fn
 	}
 }
 
@@ -153,14 +165,18 @@ func (s *Scanner) ScanDirectory(ctx context.Context, targetDir string) (*model.S
 	var totalFiles int64
 	var astFindings []model.Finding
 
+	totalCount := len(files)
 	for res := range results {
 		if res.err != nil {
 			continue
 		}
-		atomic.AddInt64(&totalFiles, 1)
-		atomic.AddInt64(&totalLOC, int64(res.lines))
+		cur := int(atomic.AddInt64(&totalFiles, 1))
+		loc := atomic.AddInt64(&totalLOC, int64(res.lines))
 		if len(res.findings) > 0 {
 			astFindings = append(astFindings, res.findings...)
+		}
+		if s.progressFn != nil {
+			s.progressFn(cur, totalCount, loc, "")
 		}
 	}
 
@@ -187,60 +203,7 @@ func (s *Scanner) ScanDirectory(ctx context.Context, targetDir string) (*model.S
 
 // collectFiles discovers scannable code files while ignoring build artifacts and dependencies.
 func (s *Scanner) collectFiles(root string) ([]string, error) {
-	var files []string
-
-	ignoredDirs := map[string]bool{
-		".git":         true,
-		".next":        true,
-		"node_modules": true,
-		"vendor":       true,
-		"dist":         true,
-		"build":        true,
-		".idea":        true,
-		".vscode":      true,
-		"coverage":     true,
-		"bin":          true,
-		"obj":          true,
-	}
-
-	validExts := map[string]bool{
-		".go":   true,
-		".ts":   true,
-		".tsx":  true,
-		".js":   true,
-		".jsx":  true,
-		".py":   true,
-		".java": true,
-		".php":  true,
-		".rb":   true,
-		".rs":   true,
-		".c":    true,
-		".cpp":  true,
-		".cs":   true,
-	}
-
-	err := filepath.WalkDir(root, func(path string, d os.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return nil
-		}
-
-		name := d.Name()
-		if d.IsDir() {
-			if ignoredDirs[name] || strings.HasPrefix(name, ".") && name != "." {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-
-		ext := strings.ToLower(filepath.Ext(path))
-		if validExts[ext] {
-			files = append(files, path)
-		}
-
-		return nil
-	})
-
-	return files, err
+	return analyzer.CollectFiles(root)
 }
 
 // parseFile streams and inspects lines of code for source-to-sink taint flows.

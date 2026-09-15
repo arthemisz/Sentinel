@@ -108,3 +108,36 @@ func TestClient_SubmitScan_MissingKey(t *testing.T) {
 		t.Errorf("expected missing key message, got %v", err)
 	}
 }
+
+func TestClient_SynchronizeScan(t *testing.T) {
+	var requestedURL string
+	var authHeader string
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedURL = r.URL.String()
+		authHeader = r.Header.Get("Authorization")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"success":true}`))
+	}))
+	defer server.Close()
+
+	c := NewClient(server.URL, "test_api_key", 5*time.Second)
+	err := c.SynchronizeScan(context.Background(), "scn_12345")
+	if err != nil {
+		t.Fatalf("unexpected error during SynchronizeScan: %v", err)
+	}
+
+	if !strings.Contains(requestedURL, "scanId=scn_12345") {
+		t.Errorf("expected URL to contain scanId=scn_12345, got %s", requestedURL)
+	}
+
+	if !strings.Contains(authHeader, "test_api_key") {
+		t.Errorf("expected auth header to contain api key, got %s", authHeader)
+	}
+
+	// Empty scan ID should return nil immediately
+	if err := c.SynchronizeScan(context.Background(), ""); err != nil {
+		t.Errorf("expected empty scanID to succeed with nil, got %v", err)
+	}
+}
+

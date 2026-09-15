@@ -15,16 +15,45 @@ import {
   Zap,
   FileCode,
   ChevronRight,
+  ChevronDown,
+  HelpCircle,
+  Info,
   Lock,
   Database,
   Terminal,
   ExternalLink,
   Activity,
 } from "lucide-react";
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  MarkerType,
+  Position,
+  Handle,
+  BackgroundVariant,
+  type Node,
+  type Edge,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
+export interface SentinelNodeData {
+  [key: string]: unknown;
+  label: string;
+  sublabel?: string;
+  role: "source" | "propagator" | "sanitizer" | "sink";
+  roleLabel?: string;
+  file?: string;
+  line?: number;
+  cwe?: string;
+  typeTag?: string;
+}
+
+export type SentinelFlowNode = Node<SentinelNodeData, "sentinelNode">;
+
 interface TaintFlowNode {
   id: string;
   label: string;
@@ -54,6 +83,9 @@ interface GraphLayerInfo {
   bgColor: string;
   borderColor: string;
   description: string;
+  plainEnglish: string;
+  explanation: string;
+  falsePositiveRole: string;
   nodeCount: number;
   edgeCount: number;
 }
@@ -171,6 +203,9 @@ const GRAPH_LAYERS: GraphLayerInfo[] = [
     bgColor: "bg-violet-50",
     borderColor: "border-violet-200",
     description: "Tree-sitter CST parsed into arena-allocated AST with source spans and lexical scopes",
+    plainEnglish: "The structural grammar of your code.",
+    explanation: "Breaks down raw source code into structured tokens, functions, and variables—turning text into a format the analysis engine can read and query.",
+    falsePositiveRole: "Eliminates false alarms caused by regex or pattern-matching scanners. By understanding AST syntax trees and lexical scope boundaries, comments, string literals, and variable names that merely match keywords are never mistakenly flagged as vulnerabilities.",
     nodeCount: 1847,
     edgeCount: 1846,
   },
@@ -183,6 +218,9 @@ const GRAPH_LAYERS: GraphLayerInfo[] = [
     bgColor: "bg-blue-50",
     borderColor: "border-blue-200",
     description: "Basic blocks with branch/jump/return terminators and conditional edges",
+    plainEnglish: "The code execution map.",
+    explanation: "Traces every possible path your code can execute, detailing decision branches (if/else, loops, errors) to prove which code actually runs and eliminate dead paths.",
+    falsePositiveRole: "Eliminates alerts on unreachable dead code. By analyzing basic blocks, branch conditions, and return terminators, Sentinel mathematically verifies that an execution path is actually feasible before raising a finding.",
     nodeCount: 24,
     edgeCount: 31,
   },
@@ -195,6 +233,9 @@ const GRAPH_LAYERS: GraphLayerInfo[] = [
     bgColor: "bg-amber-50",
     borderColor: "border-amber-200",
     description: "Interprocedural caller→callee resolution with Arg→Param position mapping",
+    plainEnglish: "The function and file connection map.",
+    explanation: "Maps how different functions call each other across files, connecting caller arguments to function parameters so the analyzer does not lose context across module boundaries.",
+    falsePositiveRole: "Eliminates cross-file blind spots and over-tainting. By resolving caller arguments to exact callee parameter positions across module boundaries, Sentinel tracks tainted arguments accurately without guessing.",
     nodeCount: 8,
     edgeCount: 11,
   },
@@ -207,6 +248,9 @@ const GRAPH_LAYERS: GraphLayerInfo[] = [
     bgColor: "bg-emerald-50",
     borderColor: "border-emerald-200",
     description: "Data dependence via reaching definitions + control dependence from post-dominator tree",
+    plainEnglish: "The data and variable trail.",
+    explanation: "Tracks where variables are defined, altered, concatenated, and reused across the program, combined with the conditions that decide whether that code executes.",
+    falsePositiveRole: "Eliminates false alarms from coincidentally shared variable names. Combining reaching data definitions with post-dominator control dependence ensures only variables that genuinely influence sink operations are tracked.",
     nodeCount: 18,
     edgeCount: 27,
   },
@@ -219,6 +263,9 @@ const GRAPH_LAYERS: GraphLayerInfo[] = [
     bgColor: "bg-rose-50",
     borderColor: "border-rose-200",
     description: "Source→Propagator→Sink value flow with sanitizer-aware path pruning",
+    plainEnglish: "The verified vulnerability path.",
+    explanation: "Strips away all safe, irrelevant code and highlights only the dangerous journey: where untrusted user input enters the system (Source) and flows un-sanitized directly into a sensitive operation (Sink).",
+    falsePositiveRole: "Eliminates false positives when input is sanitized. If an active validation routine, type coercion, or cryptographic sanitizer intercepts the flow, Sentinel mathematically proves the path is neutralized and suppresses the alert.",
     nodeCount: 6,
     edgeCount: 5,
   },
@@ -281,271 +328,839 @@ function roleStyle(role: TaintFlowNode["role"]) {
 }
 
 // ---------------------------------------------------------------------------
-// SVG Taint Flow Canvas — Custom renderer (no React Flow dependency)
+// Role Styling & React Flow Node Component
 // ---------------------------------------------------------------------------
-function TaintFlowCanvas({
-  nodes,
-  edges,
-  hoveredNode,
-  setHoveredNode,
-}: {
-  nodes: TaintFlowNode[];
-  edges: TaintFlowEdge[];
-  hoveredNode: string | null;
-  setHoveredNode: (id: string | null) => void;
-}) {
-  const NODE_W = 200;
-  const NODE_H = 80;
+function getNodeRoleStyle(role: SentinelNodeData["role"]) {
+  switch (role) {
+    case "source":
+      return {
+        badgeBg: "bg-cyan-500 text-white",
+        border: "border-cyan-400 hover:border-cyan-500",
+        label: "SOURCE",
+      };
+    case "propagator":
+      return {
+        badgeBg: "bg-slate-700 text-white",
+        border: "border-slate-300 hover:border-slate-400",
+        label: "PROPAGATOR",
+      };
+    case "sanitizer":
+      return {
+        badgeBg: "bg-emerald-600 text-white",
+        border: "border-emerald-400 hover:border-emerald-500",
+        label: "SANITIZER",
+      };
+    case "sink":
+      return {
+        badgeBg: "bg-rose-600 text-white",
+        border: "border-rose-500 hover:border-rose-600",
+        label: "SINK",
+      };
+  }
+}
 
-  // Compute positions for centering
-  const getNodeCenter = (id: string) => {
-    const node = nodes.find((n) => n.id === id);
-    if (!node) return { x: 0, y: 0 };
-    return { x: node.x + NODE_W / 2, y: node.y + NODE_H / 2 };
-  };
+function SentinelNodeCard({ data }: { data: SentinelNodeData }) {
+  const style = getNodeRoleStyle(data.role);
 
   return (
-    <svg
-      viewBox="-10 -10 580 440"
-      className="w-full h-full"
-      style={{ minHeight: 380 }}
+    <div
+      className={`relative w-[230px] rounded-lg border bg-white p-3 shadow-xs transition-all duration-200 hover:shadow-md ${style.border}`}
     >
-      <defs>
-        {/* Animated flow gradient */}
-        <linearGradient id="taintFlowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#ef4444" stopOpacity="0.9" />
-          <stop offset="50%" stopColor="#f59e0b" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#dc2626" stopOpacity="0.9" />
-        </linearGradient>
-        <linearGradient id="callFlowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.7" />
-          <stop offset="100%" stopColor="#6366f1" stopOpacity="0.7" />
-        </linearGradient>
-        <marker
-          id="arrowRed"
-          viewBox="0 0 10 7"
-          refX="9"
-          refY="3.5"
-          markerWidth="8"
-          markerHeight="6"
-          orient="auto-start-reverse"
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="!w-2 !h-2 !bg-slate-400 !border !border-white"
+      />
+      <Handle
+        type="target"
+        position={Position.Top}
+        id="top"
+        className="!w-2 !h-2 !bg-slate-400 !border !border-white"
+      />
+
+      <div className="flex items-center justify-between gap-1.5 mb-1.5">
+        <span
+          className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider ${style.badgeBg}`}
         >
-          <path d="M 0 0 L 10 3.5 L 0 7 z" fill="#ef4444" />
-        </marker>
-        <marker
-          id="arrowBlue"
-          viewBox="0 0 10 7"
-          refX="9"
-          refY="3.5"
-          markerWidth="8"
-          markerHeight="6"
-          orient="auto-start-reverse"
+          {data.roleLabel || style.label}
+        </span>
+        {data.cwe && (
+          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+            {data.cwe}
+          </span>
+        )}
+        {data.typeTag && (
+          <span className="text-[9px] font-mono text-slate-400 font-medium truncate max-w-[90px]">
+            {data.typeTag}
+          </span>
+        )}
+      </div>
+
+      <div
+        className="text-xs font-mono font-bold text-slate-900 truncate"
+        title={data.label}
+      >
+        {data.label}
+      </div>
+
+      {data.sublabel && (
+        <div
+          className="text-[10px] text-slate-500 leading-tight mt-1 truncate"
+          title={data.sublabel}
         >
-          <path d="M 0 0 L 10 3.5 L 0 7 z" fill="#6366f1" />
-        </marker>
-        {/* Animated dash */}
-        <filter id="edgeGlow">
-          <feGaussianBlur stdDeviation="2" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
+          {data.sublabel}
+        </div>
+      )}
 
-      {/* Edges */}
-      {edges.map((edge) => {
-        const from = getNodeCenter(edge.source);
-        const to = getNodeCenter(edge.target);
-        const isCall = edge.kind === "call_arg";
-        const isHighlighted =
-          hoveredNode === edge.source || hoveredNode === edge.target;
+      {data.file && (
+        <div className="flex items-center gap-1.5 text-[9px] font-mono text-slate-400 mt-2 pt-1.5 border-t border-slate-100">
+          <FileCode className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+          <span className="truncate">
+            {data.file}:{data.line}
+          </span>
+        </div>
+      )}
 
-        // Calculate control points for curved edges
-        const midX = (from.x + to.x) / 2;
-        const midY = (from.y + to.y) / 2;
-        const offset = isCall ? 40 : 0;
-        const cx = midX + offset;
-        const cy = midY;
+      <Handle
+        type="source"
+        position={Position.Right}
+        className="!w-2 !h-2 !bg-slate-400 !border !border-white"
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="bottom"
+        className="!w-2 !h-2 !bg-slate-400 !border !border-white"
+      />
+    </div>
+  );
+}
 
-        return (
-          <g key={edge.id}>
-            {/* Background glow */}
-            {isHighlighted && (
-              <path
-                d={`M ${from.x} ${from.y} Q ${cx} ${cy} ${to.x} ${to.y}`}
-                fill="none"
-                stroke={isCall ? "#818cf8" : "#f87171"}
-                strokeWidth="6"
-                strokeOpacity="0.2"
-                filter="url(#edgeGlow)"
-              />
-            )}
-            {/* Edge path */}
-            <path
-              d={`M ${from.x} ${from.y} Q ${cx} ${cy} ${to.x} ${to.y}`}
-              fill="none"
-              stroke={isCall ? "url(#callFlowGrad)" : "url(#taintFlowGrad)"}
-              strokeWidth={isHighlighted ? 2.5 : 1.8}
-              strokeDasharray={edge.animated ? "6 4" : "none"}
-              markerEnd={isCall ? "url(#arrowBlue)" : "url(#arrowRed)"}
-              className="transition-all duration-300"
-              style={{
-                animation: edge.animated
-                  ? "dashFlow 1.2s linear infinite"
-                  : "none",
-              }}
-            />
-            {/* Edge label */}
-            {isCall && (
-              <text
-                x={cx + 8}
-                y={cy - 6}
-                className="text-[9px] fill-indigo-500 font-mono font-medium select-none"
-              >
-                call_arg
-              </text>
-            )}
-          </g>
-        );
-      })}
+const nodeTypes = {
+  sentinelNode: SentinelNodeCard,
+};
 
-      {/* Nodes */}
-      {nodes.map((node) => {
-        const style = roleStyle(node.role);
-        const isHovered = hoveredNode === node.id;
+// ---------------------------------------------------------------------------
+// Active Datasets for all 5 Compiler Layers
+// ---------------------------------------------------------------------------
+export const LAYER_GRAPH_DATA: Record<
+  string,
+  { nodes: SentinelFlowNode[]; edges: Edge[] }
+> = {
+  ast: {
+    nodes: [
+      {
+        id: "ast_src",
+        type: "sentinelNode",
+        position: { x: 30, y: 120 },
+        data: {
+          label: "MemberExpression: req.query.id",
+          sublabel: "Source: HTTP GET parameter token",
+          role: "source",
+          roleLabel: "SOURCE",
+          typeTag: "AST Expr",
+          file: "routes/user.js",
+          line: 12,
+        },
+      },
+      {
+        id: "ast_decl",
+        type: "sentinelNode",
+        position: { x: 320, y: 40 },
+        data: {
+          label: "VariableDeclarator: userId",
+          sublabel: "Lexical AST declaration identifier",
+          role: "propagator",
+          roleLabel: "PROPAGATOR",
+          typeTag: "AST Decl",
+          file: "routes/user.js",
+          line: 13,
+        },
+      },
+      {
+        id: "ast_call",
+        type: "sentinelNode",
+        position: { x: 320, y: 220 },
+        data: {
+          label: "CallExpression: queryUserProfile",
+          sublabel: "Interprocedural function call boundary",
+          role: "propagator",
+          roleLabel: "PROPAGATOR",
+          typeTag: "AST Call",
+          file: "routes/user.js",
+          line: 14,
+        },
+      },
+      {
+        id: "ast_san",
+        type: "sentinelNode",
+        position: { x: 610, y: 40 },
+        data: {
+          label: "UnaryExpression: +userId",
+          sublabel: "Explicit AST number coercion guard",
+          role: "sanitizer",
+          roleLabel: "SANITIZER",
+          typeTag: "AST Cast",
+          file: "routes/user.js",
+          line: 15,
+        },
+      },
+      {
+        id: "ast_concat",
+        type: "sentinelNode",
+        position: { x: 610, y: 220 },
+        data: {
+          label: "BinaryExpression: '+' (SQL concat)",
+          sublabel: "Unescaped string concatenation",
+          role: "propagator",
+          roleLabel: "PROPAGATOR",
+          typeTag: "AST Binary",
+          file: "db/queries.js",
+          line: 5,
+        },
+      },
+      {
+        id: "ast_sink",
+        type: "sentinelNode",
+        position: { x: 900, y: 130 },
+        data: {
+          label: "CallExpression: db.query(queryStr)",
+          sublabel: "Execution of raw query string",
+          role: "sink",
+          roleLabel: "SINK",
+          typeTag: "AST Sink",
+          file: "db/queries.js",
+          line: 6,
+          cwe: "CWE-89",
+        },
+      },
+    ],
+    edges: [
+      {
+        id: "e_ast_1",
+        source: "ast_src",
+        target: "ast_decl",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#8b5cf6" },
+        style: { stroke: "#8b5cf6", strokeWidth: 2 },
+        label: "init_value",
+      },
+      {
+        id: "e_ast_2",
+        source: "ast_decl",
+        target: "ast_call",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#8b5cf6" },
+        style: { stroke: "#8b5cf6", strokeWidth: 2 },
+        label: "arg_ref",
+      },
+      {
+        id: "e_ast_3",
+        source: "ast_call",
+        target: "ast_concat",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#8b5cf6" },
+        style: { stroke: "#8b5cf6", strokeWidth: 2 },
+        label: "callee_param",
+      },
+      {
+        id: "e_ast_4",
+        source: "ast_concat",
+        target: "ast_sink",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#8b5cf6" },
+        style: { stroke: "#8b5cf6", strokeWidth: 2 },
+        label: "sink_arg",
+      },
+      {
+        id: "e_ast_san",
+        source: "ast_decl",
+        target: "ast_san",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#10b981" },
+        style: { stroke: "#10b981", strokeWidth: 1.5, strokeDasharray: "4 4" },
+        label: "safe_cast",
+      },
+    ],
+  },
+  cfg: {
+    nodes: [
+      {
+        id: "cfg_b0",
+        type: "sentinelNode",
+        position: { x: 30, y: 130 },
+        data: {
+          label: "BB0: Entry Block (GET /user)",
+          sublabel: "Branch test: if (req.query.id)",
+          role: "source",
+          roleLabel: "SOURCE",
+          file: "routes/user.js",
+          line: 11,
+        },
+      },
+      {
+        id: "cfg_b1",
+        type: "sentinelNode",
+        position: { x: 320, y: 50 },
+        data: {
+          label: "BB1: True Branch (Active)",
+          sublabel: "const userId = req.query.id",
+          role: "propagator",
+          roleLabel: "PROPAGATOR",
+          file: "routes/user.js",
+          line: 13,
+        },
+      },
+      {
+        id: "cfg_err",
+        type: "sentinelNode",
+        position: { x: 320, y: 230 },
+        data: {
+          label: "BB_Err: False Branch (400)",
+          sublabel: "res.status(400) [Pruned dead path]",
+          role: "sanitizer",
+          roleLabel: "SANITIZER",
+          file: "routes/user.js",
+          line: 18,
+        },
+      },
+      {
+        id: "cfg_b2",
+        type: "sentinelNode",
+        position: { x: 610, y: 50 },
+        data: {
+          label: "BB2: Callee Dispatch",
+          sublabel: "queryUserProfile(userId)",
+          role: "propagator",
+          roleLabel: "PROPAGATOR",
+          file: "routes/user.js",
+          line: 14,
+        },
+      },
+      {
+        id: "cfg_b3",
+        type: "sentinelNode",
+        position: { x: 610, y: 200 },
+        data: {
+          label: "BB3: SQL Query Assembly",
+          sublabel: 'queryStr = "SELECT..." + userId',
+          role: "propagator",
+          roleLabel: "PROPAGATOR",
+          file: "db/queries.js",
+          line: 5,
+        },
+      },
+      {
+        id: "cfg_b4",
+        type: "sentinelNode",
+        position: { x: 900, y: 130 },
+        data: {
+          label: "BB4: Database Execution Sink",
+          sublabel: "await db.query(queryStr)",
+          role: "sink",
+          roleLabel: "SINK",
+          file: "db/queries.js",
+          line: 6,
+          cwe: "CWE-89",
+        },
+      },
+    ],
+    edges: [
+      {
+        id: "e_cfg_1",
+        source: "cfg_b0",
+        target: "cfg_b1",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#3b82f6" },
+        style: { stroke: "#3b82f6", strokeWidth: 2 },
+        label: "cond == true",
+      },
+      {
+        id: "e_cfg_err",
+        source: "cfg_b0",
+        target: "cfg_err",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#94a3b8" },
+        style: { stroke: "#94a3b8", strokeWidth: 1.5, strokeDasharray: "4 4" },
+        label: "cond == false (abort)",
+      },
+      {
+        id: "e_cfg_2",
+        source: "cfg_b1",
+        target: "cfg_b2",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#3b82f6" },
+        style: { stroke: "#3b82f6", strokeWidth: 2 },
+        label: "jump",
+      },
+      {
+        id: "e_cfg_3",
+        source: "cfg_b2",
+        target: "cfg_b3",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#3b82f6" },
+        style: { stroke: "#3b82f6", strokeWidth: 2 },
+        label: "interproc_flow",
+      },
+      {
+        id: "e_cfg_4",
+        source: "cfg_b3",
+        target: "cfg_b4",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#3b82f6" },
+        style: { stroke: "#3b82f6", strokeWidth: 2 },
+        label: "execute",
+      },
+    ],
+  },
+  cg: {
+    nodes: [
+      {
+        id: "cg_src",
+        type: "sentinelNode",
+        position: { x: 30, y: 130 },
+        data: {
+          label: "routes/user.js::handleUser()",
+          sublabel: "HTTP Request Controller Entry",
+          role: "source",
+          roleLabel: "SOURCE",
+          file: "routes/user.js",
+          line: 10,
+        },
+      },
+      {
+        id: "cg_mw",
+        type: "sentinelNode",
+        position: { x: 320, y: 40 },
+        data: {
+          label: "middleware/auth.js::verifyJWT()",
+          sublabel: "Authentication Token Validator",
+          role: "sanitizer",
+          roleLabel: "SANITIZER",
+          file: "middleware/auth.js",
+          line: 22,
+        },
+      },
+      {
+        id: "cg_ctrl",
+        type: "sentinelNode",
+        position: { x: 320, y: 220 },
+        data: {
+          label: "controllers/user.js::getUser()",
+          sublabel: "Passes raw parameters to db layer",
+          role: "propagator",
+          roleLabel: "PROPAGATOR",
+          file: "controllers/user.js",
+          line: 15,
+        },
+      },
+      {
+        id: "cg_db",
+        type: "sentinelNode",
+        position: { x: 610, y: 130 },
+        data: {
+          label: "db/queries.js::queryUserProfile()",
+          sublabel: "Concatenates input into SQL string",
+          role: "propagator",
+          roleLabel: "PROPAGATOR",
+          file: "db/queries.js",
+          line: 4,
+        },
+      },
+      {
+        id: "cg_sink",
+        type: "sentinelNode",
+        position: { x: 900, y: 130 },
+        data: {
+          label: "pg::Client.query()",
+          sublabel: "PostgreSQL native socket execution",
+          role: "sink",
+          roleLabel: "SINK",
+          file: "node_modules/pg",
+          line: 98,
+          cwe: "CWE-89",
+        },
+      },
+    ],
+    edges: [
+      {
+        id: "e_cg_1",
+        source: "cg_src",
+        target: "cg_mw",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#d97706" },
+        style: { stroke: "#d97706", strokeWidth: 2 },
+        label: "pre_hook",
+      },
+      {
+        id: "e_cg_2",
+        source: "cg_src",
+        target: "cg_ctrl",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#d97706" },
+        style: { stroke: "#d97706", strokeWidth: 2 },
+        label: "invokes(req)",
+      },
+      {
+        id: "e_cg_3",
+        source: "cg_ctrl",
+        target: "cg_db",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#d97706" },
+        style: { stroke: "#d97706", strokeWidth: 2 },
+        label: "calls(userId)",
+      },
+      {
+        id: "e_cg_4",
+        source: "cg_db",
+        target: "cg_sink",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#d97706" },
+        style: { stroke: "#d97706", strokeWidth: 2 },
+        label: "executes(queryStr)",
+      },
+    ],
+  },
+  pdg: {
+    nodes: [
+      {
+        id: "pdg_d1",
+        type: "sentinelNode",
+        position: { x: 30, y: 60 },
+        data: {
+          label: "Def[1]: req.query.id",
+          sublabel: "Reaching definition (Untrusted input)",
+          role: "source",
+          roleLabel: "SOURCE",
+          file: "routes/user.js",
+          line: 12,
+        },
+      },
+      {
+        id: "pdg_c1",
+        type: "sentinelNode",
+        position: { x: 30, y: 240 },
+        data: {
+          label: "Ctrl[1]: if (req.query.id)",
+          sublabel: "Post-dominator control condition",
+          role: "sanitizer",
+          roleLabel: "SANITIZER",
+          file: "routes/user.js",
+          line: 11,
+        },
+      },
+      {
+        id: "pdg_d2",
+        type: "sentinelNode",
+        position: { x: 320, y: 150 },
+        data: {
+          label: "Def[2]: userId = req.query.id",
+          sublabel: "Data Dep: D1 | Control Dep: C1",
+          role: "propagator",
+          roleLabel: "PROPAGATOR",
+          file: "routes/user.js",
+          line: 13,
+        },
+      },
+      {
+        id: "pdg_d3",
+        type: "sentinelNode",
+        position: { x: 610, y: 150 },
+        data: {
+          label: 'Def[3]: queryStr = "..." + userId',
+          sublabel: "Data Dep: Def[2] (Reaching definition)",
+          role: "propagator",
+          roleLabel: "PROPAGATOR",
+          file: "db/queries.js",
+          line: 5,
+        },
+      },
+      {
+        id: "pdg_use",
+        type: "sentinelNode",
+        position: { x: 900, y: 150 },
+        data: {
+          label: "Use[1]: db.query(queryStr)",
+          sublabel: "Data Dep: Def[3] reaches SQL execution",
+          role: "sink",
+          roleLabel: "SINK",
+          file: "db/queries.js",
+          line: 6,
+          cwe: "CWE-89",
+        },
+      },
+    ],
+    edges: [
+      {
+        id: "e_pdg_c1",
+        source: "pdg_c1",
+        target: "pdg_d2",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#64748b" },
+        style: { stroke: "#64748b", strokeWidth: 1.8, strokeDasharray: "4 4" },
+        label: "ctrl_dep",
+      },
+      {
+        id: "e_pdg_d1",
+        source: "pdg_d1",
+        target: "pdg_d2",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#059669" },
+        style: { stroke: "#059669", strokeWidth: 2 },
+        label: "data_dep: d1",
+      },
+      {
+        id: "e_pdg_d2",
+        source: "pdg_d2",
+        target: "pdg_d3",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#059669" },
+        style: { stroke: "#059669", strokeWidth: 2 },
+        label: "data_dep: userId",
+      },
+      {
+        id: "e_pdg_d3",
+        source: "pdg_d3",
+        target: "pdg_use",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#059669" },
+        style: { stroke: "#059669", strokeWidth: 2 },
+        label: "data_dep: queryStr",
+      },
+    ],
+  },
+  taint: {
+    nodes: [
+      {
+        id: "vfg_src",
+        type: "sentinelNode",
+        position: { x: 30, y: 60 },
+        data: {
+          label: "req.query.id",
+          sublabel: "HTTP Query Parameter (Untrusted Input)",
+          role: "source",
+          roleLabel: "SOURCE",
+          file: "routes/user.js",
+          line: 12,
+          cwe: "CWE-89",
+        },
+      },
+      {
+        id: "vfg_p1",
+        type: "sentinelNode",
+        position: { x: 320, y: 60 },
+        data: {
+          label: "const userId = req.query.id",
+          sublabel: "Direct Variable Assignment",
+          role: "propagator",
+          roleLabel: "PROPAGATOR",
+          file: "routes/user.js",
+          line: 13,
+        },
+      },
+      {
+        id: "vfg_p2",
+        type: "sentinelNode",
+        position: { x: 610, y: 60 },
+        data: {
+          label: "queryUserProfile(userId)",
+          sublabel: "Cross-function Call Boundary Argument",
+          role: "propagator",
+          roleLabel: "PROPAGATOR",
+          file: "routes/user.js",
+          line: 14,
+        },
+      },
+      {
+        id: "vfg_p3",
+        type: "sentinelNode",
+        position: { x: 610, y: 230 },
+        data: {
+          label: "param: userId",
+          sublabel: "function queryUserProfile(userId)",
+          role: "propagator",
+          roleLabel: "PROPAGATOR",
+          file: "db/queries.js",
+          line: 4,
+        },
+      },
+      {
+        id: "vfg_p4",
+        type: "sentinelNode",
+        position: { x: 320, y: 230 },
+        data: {
+          label: 'queryStr = "SELECT..." + userId',
+          sublabel: "Unescaped String Concatenation",
+          role: "propagator",
+          roleLabel: "PROPAGATOR",
+          file: "db/queries.js",
+          line: 5,
+          cwe: "CWE-89",
+        },
+      },
+      {
+        id: "vfg_sink",
+        type: "sentinelNode",
+        position: { x: 30, y: 230 },
+        data: {
+          label: "await db.query(queryStr)",
+          sublabel: "Raw SQL Execution Sink",
+          role: "sink",
+          roleLabel: "SINK",
+          file: "db/queries.js",
+          line: 6,
+          cwe: "CWE-89",
+        },
+      },
+      {
+        id: "vfg_san",
+        type: "sentinelNode",
+        position: { x: 320, y: 390 },
+        data: {
+          label: "validateUUID(userId)",
+          sublabel: "Bypassed: Sanitizer omitted on exploit path",
+          role: "sanitizer",
+          roleLabel: "SANITIZER",
+          file: "utils/validation.js",
+          line: 28,
+        },
+      },
+    ],
+    edges: [
+      {
+        id: "e_vfg_1",
+        source: "vfg_src",
+        target: "vfg_p1",
+        animated: true,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#f43f5e" },
+        style: { stroke: "#f43f5e", strokeWidth: 2.5, strokeDasharray: "6 4" },
+        label: "taint_source",
+      },
+      {
+        id: "e_vfg_2",
+        source: "vfg_p1",
+        target: "vfg_p2",
+        animated: true,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#f43f5e" },
+        style: { stroke: "#f43f5e", strokeWidth: 2.5, strokeDasharray: "6 4" },
+        label: "flow",
+      },
+      {
+        id: "e_vfg_3",
+        source: "vfg_p2",
+        target: "vfg_p3",
+        animated: true,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#f43f5e" },
+        style: { stroke: "#f43f5e", strokeWidth: 2.5, strokeDasharray: "6 4" },
+        label: "call_arg",
+      },
+      {
+        id: "e_vfg_4",
+        source: "vfg_p3",
+        target: "vfg_p4",
+        animated: true,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#f43f5e" },
+        style: { stroke: "#f43f5e", strokeWidth: 2.5, strokeDasharray: "6 4" },
+        label: "string_concat",
+      },
+      {
+        id: "e_vfg_5",
+        source: "vfg_p4",
+        target: "vfg_sink",
+        animated: true,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#f43f5e" },
+        style: { stroke: "#f43f5e", strokeWidth: 2.5, strokeDasharray: "6 4" },
+        label: "vulnerable_sink",
+      },
+      {
+        id: "e_vfg_san",
+        source: "vfg_p1",
+        target: "vfg_san",
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#10b981" },
+        style: { stroke: "#10b981", strokeWidth: 1.5, strokeDasharray: "4 4" },
+        label: "omitted_guard",
+      },
+    ],
+  },
+};
 
-        return (
-          <g
-            key={node.id}
-            onMouseEnter={() => setHoveredNode(node.id)}
-            onMouseLeave={() => setHoveredNode(null)}
-            className="cursor-pointer"
+// ---------------------------------------------------------------------------
+// Definition Banner & Collapsible Explainer Card
+// ---------------------------------------------------------------------------
+function LayerDefinitionBanner({ layer }: { layer: GraphLayerInfo }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white/95 backdrop-blur-xs p-4 shadow-xs transition-all">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${layer.bgColor} ${layer.color} border ${layer.borderColor}`}
+            >
+              {layer.abbr}
+            </span>
+            <span className="text-xs font-bold text-slate-900">
+              {layer.plainEnglish}
+            </span>
+          </div>
+          <p className="text-xs text-slate-600 leading-relaxed max-w-2xl">
+            {layer.explanation}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200/80 transition-colors shrink-0 self-start sm:self-center cursor-pointer"
+          aria-expanded={isExpanded}
+        >
+          <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
+          <span>What is this graph?</span>
+          <ChevronDown
+            className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${
+              isExpanded ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+      </div>
+
+      {/* Expandable "Learn More" Drawer */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
           >
-            {/* Shadow/glow */}
-            <rect
-              x={node.x - 2}
-              y={node.y - 2}
-              width={NODE_W + 4}
-              height={NODE_H + 4}
-              rx="10"
-              fill="none"
-              stroke={
-                node.role === "source"
-                  ? "#fca5a5"
-                  : node.role === "sink"
-                  ? "#fca5a5"
-                  : node.role === "sanitizer"
-                  ? "#6ee7b7"
-                  : "#fcd34d"
-              }
-              strokeWidth={isHovered ? "2" : "0"}
-              strokeOpacity="0.5"
-              className="transition-all duration-200"
-            />
-            {/* Card background */}
-            <rect
-              x={node.x}
-              y={node.y}
-              width={NODE_W}
-              height={NODE_H}
-              rx="8"
-              fill="white"
-              stroke={
-                node.role === "source"
-                  ? "#f87171"
-                  : node.role === "sink"
-                  ? "#dc2626"
-                  : node.role === "sanitizer"
-                  ? "#34d399"
-                  : "#fbbf24"
-              }
-              strokeWidth="1.5"
-              className="transition-all duration-200"
-            />
-            {/* Role badge */}
-            <rect
-              x={node.x + 6}
-              y={node.y + 6}
-              width={
-                node.role === "propagator"
-                  ? 78
-                  : node.role === "sanitizer"
-                  ? 68
-                  : node.role === "source"
-                  ? 54
-                  : 38
-              }
-              height="16"
-              rx="3"
-              fill={
-                node.role === "source"
-                  ? "#dc2626"
-                  : node.role === "sink"
-                  ? "#991b1b"
-                  : node.role === "sanitizer"
-                  ? "#059669"
-                  : "#d97706"
-              }
-            />
-            <text
-              x={node.x + 10}
-              y={node.y + 18}
-              className="text-[8px] fill-white font-mono font-bold tracking-wider select-none"
-            >
-              {style.label}
-            </text>
-            {/* Variable name */}
-            <text
-              x={node.x + 10}
-              y={node.y + 38}
-              className="text-[11px] fill-slate-900 font-mono font-semibold select-none"
-            >
-              {node.label.length > 24
-                ? node.label.substring(0, 24) + "…"
-                : node.label}
-            </text>
-            {/* File/line */}
-            <text
-              x={node.x + 10}
-              y={node.y + 54}
-              className="text-[9px] fill-slate-400 font-mono select-none"
-            >
-              {node.file}:{node.line}
-            </text>
-            {/* CWE badge if present */}
-            {node.cwe && (
-              <>
-                <rect
-                  x={node.x + NODE_W - 52}
-                  y={node.y + 6}
-                  width="46"
-                  height="16"
-                  rx="3"
-                  fill="#fef2f2"
-                  stroke="#fecaca"
-                  strokeWidth="0.5"
-                />
-                <text
-                  x={node.x + NODE_W - 48}
-                  y={node.y + 18}
-                  className="text-[8px] fill-red-700 font-mono font-bold select-none"
-                >
-                  {node.cwe}
-                </text>
-              </>
-            )}
-          </g>
-        );
-      })}
+            <div className="mt-3.5 pt-3.5 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div className="p-3 rounded-lg bg-emerald-50/70 border border-emerald-200/80 space-y-1">
+                <div className="flex items-center gap-1.5 text-emerald-800 font-bold text-[11px]">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>Role in Eliminating False Positives</span>
+                </div>
+                <p className="text-[11px] text-emerald-900/90 leading-relaxed">
+                  {layer.falsePositiveRole}
+                </p>
+              </div>
 
-      <style>{`
-        @keyframes dashFlow {
-          from { stroke-dashoffset: 20; }
-          to   { stroke-dashoffset: 0; }
-        }
-      `}</style>
-    </svg>
+              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200/80 space-y-1">
+                <div className="flex items-center gap-1.5 text-slate-800 font-bold text-[11px]">
+                  <Workflow className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                  <span>Compiler Engine Representation</span>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  {layer.description}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -829,10 +1444,14 @@ function AnimatedStat({
 // ---------------------------------------------------------------------------
 export default function DeepTaintGraphSection() {
   const [activeLayer, setActiveLayer] = useState("taint");
-  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
   const currentLayer = useMemo(
     () => GRAPH_LAYERS.find((l) => l.key === activeLayer) || GRAPH_LAYERS[4],
+    [activeLayer]
+  );
+
+  const activeGraphData = useMemo(
+    () => LAYER_GRAPH_DATA[activeLayer] || LAYER_GRAPH_DATA.taint,
     [activeLayer]
   );
 
@@ -899,6 +1518,9 @@ export default function DeepTaintGraphSection() {
               setActiveLayer={setActiveLayer}
             />
 
+            {/* Plain-English Definition Banner & Collapsible Explainer */}
+            <LayerDefinitionBanner layer={currentLayer} />
+
             {/* Interactive Canvas */}
             <div className="relative rounded-xl border border-slate-200 bg-slate-50/50 overflow-hidden shadow-sm">
               {/* Canvas Header */}
@@ -910,90 +1532,53 @@ export default function DeepTaintGraphSection() {
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
                   </div>
                   <span className="text-[11px] font-mono font-semibold text-slate-500 ml-2">
-                    sentinel-core::taint_graph — Interactive Value Flow Graph
+                    sentinel-core::{currentLayer.key === "taint" ? "taint_graph" : `${currentLayer.key}_graph`} — Interactive {currentLayer.abbr} Canvas
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400">
                   <Activity className="w-3 h-3 text-emerald-500" />
-                  <span>Live</span>
+                  <span>Live Canvas</span>
                 </div>
               </div>
 
-              {/* SVG Canvas */}
-              <div className="p-4 bg-gradient-to-br from-slate-50 via-white to-slate-50">
-                <AnimatePresence mode="wait">
-                  {activeLayer === "taint" ? (
-                    <motion.div
-                      key="taint-canvas"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.25 }}
-                    >
-                      <TaintFlowCanvas
-                        nodes={DEMO_NODES}
-                        edges={DEMO_EDGES}
-                        hoveredNode={hoveredNode}
-                        setHoveredNode={setHoveredNode}
-                      />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key={`layer-${activeLayer}`}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="flex items-center justify-center py-16"
-                    >
-                      <div className="text-center space-y-4">
-                        <div
-                          className={`inline-flex p-4 rounded-2xl ${currentLayer.bgColor} border ${currentLayer.borderColor}`}
-                        >
-                          <div className={`${currentLayer.color} scale-150`}>
-                            {currentLayer.icon}
-                          </div>
-                        </div>
-                        <div>
-                          <h4 className="text-lg font-bold text-slate-900">
-                            {currentLayer.name}
-                          </h4>
-                          <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-                            {currentLayer.description}
-                          </p>
-                        </div>
-                        <div className="flex items-center justify-center gap-4 text-xs font-mono text-slate-600">
-                          <span>
-                            <strong>{currentLayer.nodeCount}</strong> nodes
-                          </span>
-                          <span className="text-slate-300">·</span>
-                          <span>
-                            <strong>{currentLayer.edgeCount}</strong> edges
-                          </span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+              {/* Interactive Graph Canvas (Explicit 520px height) */}
+              <div className="h-[520px] w-full relative bg-gradient-to-br from-slate-50 via-white to-slate-50">
+                <ReactFlow
+                  key={activeLayer}
+                  nodes={activeGraphData.nodes}
+                  edges={activeGraphData.edges}
+                  nodeTypes={nodeTypes}
+                  fitView
+                  fitViewOptions={{ padding: 0.18 }}
+                  minZoom={0.2}
+                  maxZoom={1.5}
+                  proOptions={{ hideAttribution: true }}
+                >
+                  <Background
+                    variant={BackgroundVariant.Dots}
+                    gap={16}
+                    size={1}
+                    color="#cbd5e1"
+                  />
+                  <Controls className="!bg-white !border-slate-200 !shadow-sm !rounded-lg" />
+                </ReactFlow>
               </div>
 
               {/* Legend */}
               <div className="px-4 py-2.5 bg-white border-t border-slate-200 flex flex-wrap items-center gap-4 text-[10px] font-mono text-slate-500">
-                {(
-                  [
-                    { color: "bg-rose-500", label: "Source" },
-                    { color: "bg-amber-500", label: "Propagator" },
-                    { color: "bg-emerald-500", label: "Sanitizer" },
-                    { color: "bg-red-800", label: "Sink" },
-                  ] as const
-                ).map(({ color, label }) => (
+                {[
+                  { color: "bg-cyan-500", label: "Source" },
+                  { color: "bg-slate-700", label: "Propagator" },
+                  { color: "bg-emerald-600", label: "Sanitizer" },
+                  { color: "bg-rose-600", label: "Sink" },
+                ].map(({ color, label }) => (
                   <span key={label} className="flex items-center gap-1.5">
                     <span className={`w-2 h-2 rounded-full ${color}`} />
                     {label}
                   </span>
                 ))}
-                <span className="ml-auto text-slate-400">
-                  Hover nodes to trace flow path
+                <span className="ml-auto text-slate-400 hidden sm:inline">
+                  Drag nodes • Scroll to zoom • fitView auto-centered
                 </span>
               </div>
             </div>

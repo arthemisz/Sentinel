@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/sentinel-sast/sentinel/cli/internal/model"
+	"github.com/sentinel-sast/sentinel/cli/pkg/ui"
 )
 
 // Reporter handles terminal output formatting and report file exporting.
@@ -66,16 +67,9 @@ func (r *Reporter) ExportJSON(payload *model.ScanPayload, exportTarget string) (
 	return outputPath, nil
 }
 
-// PrintBanner outputs the Sentinel CLI ASCII header.
+// PrintBanner outputs the Sentinel CLI ASCII header with dynamic fluid green charging logo.
 func (r *Reporter) PrintBanner(version string) {
-	fmt.Fprintf(r.out, "\n")
-	fmt.Fprintf(r.out, "  ███████╗███████╗███╗   ██╗████████╗██╗███╗   ██╗███████╗██╗     \n")
-	fmt.Fprintf(r.out, "  ██╔════╝██╔════╝████╗  ██║╚══██╔══╝██║████╗  ██║██╔════╝██║     \n")
-	fmt.Fprintf(r.out, "  ███████╗█████╗  ██╔██╗ ██║   ██║   ██║██╔██╗ ██║█████╗  ██║     \n")
-	fmt.Fprintf(r.out, "  ╚════██║██╔══╝  ██║╚██╗██║   ██║   ██║██║╚██╗██║██╔══╝  ██║     \n")
-	fmt.Fprintf(r.out, "  ███████║███████╗██║ ╚████║   ██║   ██║██║ ╚████║███████╗███████╗\n")
-	fmt.Fprintf(r.out, "  ╚══════╝╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝╚═╝  ╚═══╝╚══════╝╚══════╝\n")
-	fmt.Fprintf(r.out, "  Deterministic SAST & Interprocedural Taint Engine [v%s]\n\n", version)
+	ui.PrintBanner(r.out, version)
 }
 
 // PrintScanSummary prints stats for the local AST indexing stage.

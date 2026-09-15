@@ -3,23 +3,104 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
+// ─── Enterprise Enums ────────────────────────────────────────────────────────
+
+enum Role {
+  OWNER
+  SECURITY_ADMIN
+  DEVELOPER
+  AUDITOR
+}
+
+enum FindingStatus {
+  OPEN
+  TRIAGED
+  RESOLVED
+  SUPPRESSED_FALSE_POSITIVE
+  SUPPRESSED_ACCEPTED_RISK
+}
+
+// ─── Enterprise Models ───────────────────────────────────────────────────────
+
+model Organization {
+  id        String       @id @default(cuid())
+  name      String
+  slug      String       @unique
+  members   Membership[]
+  projects  Project[]
+  policies  Policy[]
+  auditLogs AuditLog[]
+  apiTokens ApiToken[]
+  createdAt DateTime     @default(now())
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  role           Role         @default(DEVELOPER)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@unique([userId, organizationId])
+}
+
+model Policy {
+  id             String       @id @default(cuid())
+  name           String       // e.g. "Production PR Gate"
+  failOnCritical Boolean      @default(true)
+  failOnHigh     Boolean      @default(true)
+  blockOnCWEs    String[]     // e.g. ["CWE-89", "CWE-78"]
+  isEnforced     Boolean      @default(true)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model AuditLog {
+  id             String       @id @default(cuid())
+  action         String       // "VULN_SUPPRESSED", "POLICY_UPDATED", "TOKEN_GENERATED", "SCAN_INGESTED"
+  actorEmail     String
+  targetEntity   String?      // e.g. Scan ID, Project ID, or Vulnerability ID
+  metadata       Json?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+}
+
+model ApiToken {
+  id             String       @id @default(cuid())
+  name           String       // e.g. "GitHub Actions CI"
+  tokenHash      String       @unique
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  lastUsedAt     DateTime?
+}
+
+// ─── Auth.js / NextAuth Models ───────────────────────────────────────────────
+
 model User {
-  id            String    @id @default(cuid())
+  id            String       @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?      @unique
   emailVerified DateTime?
   image         String?
-  githubId      String?   @unique
+  githubId      String?      @unique
   accounts      Account[]
   sessions      Session[]
   apiKeys       ApiKey[]
   scans         Scan[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  memberships   Membership[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 }
 
 model Account {
@@ -49,6 +130,16 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Sentinel Core Models ────────────────────────────────────────────────────
+
 model ApiKey {
   id         String    @id @default(cuid())
   key        String    @unique
@@ -62,25 +153,36 @@ model ApiKey {
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model Project {
+  id             String        @id @default(cuid())
+  name           String
+  repoUrl        String?
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
 model Scan {
-  id                String   @id @default(cuid())
+  id                String          @id @default(cuid())
   userId            String
-  scanId            String   @unique
+  scanId            String          @unique
   targetPath        String?
   engineVersion     String?
   status            String
-  filesScanned      Int      @default(0)
-  linesOfCode       Int      @default(0)
-  durationMs        Int      @default(0)
-  totalFindings     Int      @default(0)
-  confirmedFindings Int      @default(0)
-  filteredFindings  Int      @default(0)
+  gateStatus        String?         // "PASSED" | "FAILED" — set by quality gate evaluation
+  filesScanned      Int             @default(0)
+  linesOfCode       Int             @default(0)
+  durationMs        Int             @default(0)
+  totalFindings     Int             @default(0)
+  confirmedFindings Int             @default(0)
+  filteredFindings  Int             @default(0)
   gitBranch         String?
   gitCommit         String?
   gitRepository     String?
   payload           Json?
-  createdAt         DateTime @default(now())
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime        @default(now())
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   vulnerabilities   Vulnerability[]
 }
 

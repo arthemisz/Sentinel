@@ -364,18 +364,18 @@ function SentinelNodeCard({ data }: { data: SentinelNodeData }) {
 
   return (
     <div
-      className={`relative w-[230px] rounded-lg border bg-white p-3 shadow-xs transition-all duration-200 hover:shadow-md ${style.border}`}
+      className={`relative w-[230px] rounded-lg border bg-white dark:bg-[#151820] p-3 shadow-xs transition-all duration-200 hover:shadow-md ${style.border}`}
     >
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-2 !h-2 !bg-slate-400 !border !border-white"
+        className="!w-2 !h-2 !bg-slate-400 !border !border-white dark:!border-[#151820]"
       />
       <Handle
         type="target"
         position={Position.Top}
         id="top"
-        className="!w-2 !h-2 !bg-slate-400 !border !border-white"
+        className="!w-2 !h-2 !bg-slate-400 !border !border-white dark:!border-[#151820]"
       />
 
       <div className="flex items-center justify-between gap-1.5 mb-1.5">
@@ -385,7 +385,7 @@ function SentinelNodeCard({ data }: { data: SentinelNodeData }) {
           {data.roleLabel || style.label}
         </span>
         {data.cwe && (
-          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50">
             {data.cwe}
           </span>
         )}
@@ -397,7 +397,7 @@ function SentinelNodeCard({ data }: { data: SentinelNodeData }) {
       </div>
 
       <div
-        className="text-xs font-mono font-bold text-slate-900 truncate"
+        className="text-xs font-mono font-bold text-slate-900 dark:text-slate-100 truncate"
         title={data.label}
       >
         {data.label}
@@ -405,7 +405,7 @@ function SentinelNodeCard({ data }: { data: SentinelNodeData }) {
 
       {data.sublabel && (
         <div
-          className="text-[10px] text-slate-500 leading-tight mt-1 truncate"
+          className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight mt-1 truncate"
           title={data.sublabel}
         >
           {data.sublabel}
@@ -413,7 +413,7 @@ function SentinelNodeCard({ data }: { data: SentinelNodeData }) {
       )}
 
       {data.file && (
-        <div className="flex items-center gap-1.5 text-[9px] font-mono text-slate-400 mt-2 pt-1.5 border-t border-slate-100">
+        <div className="flex items-center gap-1.5 text-[9px] font-mono text-slate-400 mt-2 pt-1.5 border-t border-slate-100 dark:border-[#252b3b]">
           <FileCode className="w-2.5 h-2.5 text-slate-400 shrink-0" />
           <span className="truncate">
             {data.file}:{data.line}
@@ -424,13 +424,13 @@ function SentinelNodeCard({ data }: { data: SentinelNodeData }) {
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-2 !h-2 !bg-slate-400 !border !border-white"
+        className="!w-2 !h-2 !bg-slate-400 !border !border-white dark:!border-[#151820]"
       />
       <Handle
         type="source"
         position={Position.Bottom}
         id="bottom"
-        className="!w-2 !h-2 !bg-slate-400 !border !border-white"
+        className="!w-2 !h-2 !bg-slate-400 !border !border-white dark:!border-[#151820]"
       />
     </div>
   );
@@ -1092,7 +1092,7 @@ function LayerDefinitionBanner({ layer }: { layer: GraphLayerInfo }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white/95 backdrop-blur-xs p-4 shadow-xs transition-all">
+    <div className="rounded-xl border border-slate-200 dark:border-[#252b3b] bg-white/95 dark:bg-[#151820]/95 backdrop-blur-xs p-4 shadow-xs transition-all">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -1101,11 +1101,11 @@ function LayerDefinitionBanner({ layer }: { layer: GraphLayerInfo }) {
             >
               {layer.abbr}
             </span>
-            <span className="text-xs font-bold text-slate-900">
+            <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
               {layer.plainEnglish}
             </span>
           </div>
-          <p className="text-xs text-slate-600 leading-relaxed max-w-2xl">
+          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl">
             {layer.explanation}
           </p>
         </div>
@@ -1113,13 +1113,13 @@ function LayerDefinitionBanner({ layer }: { layer: GraphLayerInfo }) {
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200/80 transition-colors shrink-0 self-start sm:self-center cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-[#1f2637] hover:bg-slate-200/80 dark:hover:bg-[#283248] transition-colors shrink-0 self-start sm:self-center cursor-pointer"
           aria-expanded={isExpanded}
         >
-          <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
+          <HelpCircle className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
           <span>What is this graph?</span>
           <ChevronDown
-            className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${
+            className={`w-3.5 h-3.5 text-slate-500 dark:text-slate-400 transition-transform duration-200 ${
               isExpanded ? "rotate-180" : ""
             }`}
           />
@@ -1136,23 +1136,23 @@ function LayerDefinitionBanner({ layer }: { layer: GraphLayerInfo }) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="mt-3.5 pt-3.5 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-lg bg-emerald-50/70 border border-emerald-200/80 space-y-1">
-                <div className="flex items-center gap-1.5 text-emerald-800 font-bold text-[11px]">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <div className="mt-3.5 pt-3.5 border-t border-slate-100 dark:border-[#1e2330] grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div className="p-3 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 space-y-1">
+                <div className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300 font-bold text-[11px]">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span>Role in Eliminating False Positives</span>
                 </div>
-                <p className="text-[11px] text-emerald-900/90 leading-relaxed">
+                <p className="text-[11px] text-emerald-900/90 dark:text-emerald-200 leading-relaxed">
                   {layer.falsePositiveRole}
                 </p>
               </div>
 
-              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200/80 space-y-1">
-                <div className="flex items-center gap-1.5 text-slate-800 font-bold text-[11px]">
-                  <Workflow className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+              <div className="p-3 rounded-lg bg-slate-50 dark:bg-[#11141c] border border-slate-200/80 dark:border-[#1e2330] space-y-1">
+                <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200 font-bold text-[11px]">
+                  <Workflow className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400 shrink-0" />
                   <span>Compiler Engine Representation</span>
                 </div>
-                <p className="text-[11px] text-slate-600 leading-relaxed">
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
                   {layer.description}
                 </p>
               </div>
@@ -1169,9 +1169,9 @@ function LayerDefinitionBanner({ layer }: { layer: GraphLayerInfo }) {
 // ---------------------------------------------------------------------------
 function FindingDetailCard({ finding }: { finding: FindingCard }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    <div className="rounded-xl border border-slate-200 dark:border-[#252b3b] bg-white dark:bg-[#151820] shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+      <div className="px-5 py-3.5 bg-slate-50 dark:bg-[#11141c] border-b border-slate-200 dark:border-[#1e2330] flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div
             className={`w-2 h-2 rounded-full ${
@@ -1182,17 +1182,17 @@ function FindingDetailCard({ finding }: { finding: FindingCard }) {
                 : "bg-yellow-500"
             }`}
           />
-          <span className="text-xs font-bold text-slate-900 font-mono">
+          <span className="text-xs font-bold text-slate-900 dark:text-slate-100 font-mono">
             {finding.id}
           </span>
         </div>
         <div
           className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
             finding.severity === "Critical"
-              ? "bg-red-100 text-red-800 border border-red-200"
+              ? "bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-400 border border-red-200 dark:border-red-900/50"
               : finding.severity === "High"
-              ? "bg-amber-100 text-amber-800 border border-amber-200"
-              : "bg-yellow-100 text-yellow-800 border border-yellow-200"
+              ? "bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50"
+              : "bg-yellow-100 dark:bg-yellow-950/40 text-yellow-800 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-900/50"
           }`}
         >
           {finding.severity.toUpperCase()}
@@ -1202,14 +1202,14 @@ function FindingDetailCard({ finding }: { finding: FindingCard }) {
       {/* Body */}
       <div className="p-5 space-y-3.5">
         <div>
-          <h4 className="text-sm font-bold text-slate-900">
+          <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
             {finding.rule}
           </h4>
           <div className="flex items-center gap-2 mt-1.5">
-            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-semibold">
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 font-semibold">
               {finding.cwe}
             </span>
-            <span className="text-[10px] font-mono text-slate-500">
+            <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
               Confidence: {finding.confidence}
             </span>
           </div>
@@ -1217,36 +1217,36 @@ function FindingDetailCard({ finding }: { finding: FindingCard }) {
 
         {/* Flow path mini diagram */}
         <div className="flex items-center gap-2 text-[11px] font-mono py-2">
-          <span className="flex items-center gap-1 px-2 py-1 rounded bg-rose-50 text-rose-800 border border-rose-200">
+          <span className="flex items-center gap-1 px-2 py-1 rounded bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50">
             <AlertTriangle className="w-3 h-3" />
             {finding.source}
           </span>
-          <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+          <ChevronRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />
           <span className="text-slate-400">…</span>
-          <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
-          <span className="flex items-center gap-1 px-2 py-1 rounded bg-red-50 text-red-900 border border-red-200">
+          <ChevronRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />
+          <span className="flex items-center gap-1 px-2 py-1 rounded bg-red-50 dark:bg-red-950/40 text-red-900 dark:text-red-300 border border-red-200 dark:border-red-900/50">
             <Database className="w-3 h-3" />
             {finding.sink}
           </span>
         </div>
 
         {/* File reference */}
-        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-mono">
+        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 font-mono">
           <FileCode className="w-3 h-3" />
           <span>{finding.file}</span>
-          <span className="text-slate-300">·</span>
+          <span className="text-slate-300 dark:text-slate-600">·</span>
           <span>Line {finding.line}</span>
         </div>
 
         {/* Sanitized badge */}
         <div className="flex items-center gap-2">
           {finding.isSanitized ? (
-            <span className="flex items-center gap-1 text-[10px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2 py-0.5">
+            <span className="flex items-center gap-1 text-[10px] font-mono text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 rounded px-2 py-0.5">
               <ShieldCheck className="w-3 h-3" />
               Sanitizer detected — suppressed
             </span>
           ) : (
-            <span className="flex items-center gap-1 text-[10px] font-mono text-red-700 bg-red-50 border border-red-200 rounded px-2 py-0.5">
+            <span className="flex items-center gap-1 text-[10px] font-mono text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded px-2 py-0.5">
               <Bug className="w-3 h-3" />
               No sanitizer on path — exploitable
             </span>
@@ -1281,7 +1281,7 @@ function LayerSelector({
             className={`group relative flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 border cursor-pointer ${
               isActive
                 ? `${layer.bgColor} ${layer.borderColor} ${layer.color} shadow-sm`
-                : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300"
+                : "bg-white dark:bg-[#151820] border-slate-200 dark:border-[#252b3b] text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#1a1f2e] hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-[#353d50]"
             }`}
           >
             <span className={isActive ? layer.color : "text-slate-400"}>
@@ -1338,12 +1338,12 @@ function LayerDetail({ layer }: { layer: GraphLayerInfo }) {
         ].map((stat) => (
           <div
             key={stat.label}
-            className="bg-white rounded-lg border border-slate-200/80 px-3 py-2 text-center"
+            className="bg-white dark:bg-[#11141c] rounded-lg border border-slate-200/80 dark:border-[#252b3b] px-3 py-2 text-center"
           >
-            <div className="text-[10px] uppercase tracking-wider text-slate-400 font-mono font-semibold">
+            <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-mono font-semibold">
               {stat.label}
             </div>
-            <div className="text-sm font-bold text-slate-900 font-mono mt-0.5">
+            <div className="text-sm font-bold text-slate-900 dark:text-slate-100 font-mono mt-0.5">
               {stat.value}
             </div>
           </div>
@@ -1358,11 +1358,11 @@ function LayerDetail({ layer }: { layer: GraphLayerInfo }) {
 // ---------------------------------------------------------------------------
 function PipelineFlow() {
   const stages = [
-    { label: "Tree-sitter\nParse", icon: <FileCode className="w-3.5 h-3.5" />, color: "text-violet-700 bg-violet-50 border-violet-200" },
-    { label: "CFG\nConstruct", icon: <GitBranch className="w-3.5 h-3.5" />, color: "text-blue-700 bg-blue-50 border-blue-200" },
-    { label: "Call Graph\nResolve", icon: <Network className="w-3.5 h-3.5" />, color: "text-amber-700 bg-amber-50 border-amber-200" },
-    { label: "PDG\nSynthesize", icon: <Workflow className="w-3.5 h-3.5" />, color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
-    { label: "Taint\nPropagate", icon: <Bug className="w-3.5 h-3.5" />, color: "text-rose-700 bg-rose-50 border-rose-200" },
+    { label: "Tree-sitter\nParse", icon: <FileCode className="w-3.5 h-3.5" />, color: "text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/40 border-violet-200 dark:border-violet-900/50" },
+    { label: "CFG\nConstruct", icon: <GitBranch className="w-3.5 h-3.5" />, color: "text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900/50" },
+    { label: "Call Graph\nResolve", icon: <Network className="w-3.5 h-3.5" />, color: "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/50" },
+    { label: "PDG\nSynthesize", icon: <Workflow className="w-3.5 h-3.5" />, color: "text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/40" },
+    { label: "Taint\nPropagate", icon: <Bug className="w-3.5 h-3.5" />, color: "text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/50" },
   ];
 
   return (
@@ -1376,7 +1376,7 @@ function PipelineFlow() {
             <span>{stage.label.split("\n")[0]}</span>
           </div>
           {i < stages.length - 1 && (
-            <ChevronRight className="w-3 h-3 text-slate-300 flex-shrink-0" />
+            <ChevronRight className="w-3 h-3 text-slate-300 dark:text-slate-600 flex-shrink-0" />
           )}
         </React.Fragment>
       ))}
@@ -1418,9 +1418,8 @@ function AnimatedStat({
     const animate = (now: number) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease-out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplayValue(Math.round(eased * value));
+      const ease = 1 - Math.pow(1 - progress, 3);
+      setDisplayValue(Math.floor(ease * value));
       if (progress < 1) requestAnimationFrame(animate);
     };
     requestAnimationFrame(animate);
@@ -1428,11 +1427,11 @@ function AnimatedStat({
 
   return (
     <div ref={ref} className="text-center">
-      <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tabular-nums">
+      <div className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-slate-100">
         {displayValue.toLocaleString()}
-        {suffix && <span className="text-lg text-slate-400">{suffix}</span>}
+        {suffix}
       </div>
-      <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mt-1">
+      <div className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
         {label}
       </div>
     </div>
@@ -1443,7 +1442,7 @@ function AnimatedStat({
 // MAIN SECTION COMPONENT
 // ---------------------------------------------------------------------------
 export default function DeepTaintGraphSection() {
-  const [activeLayer, setActiveLayer] = useState("taint");
+  const [activeLayer, setActiveLayer] = useState<string>("taint");
 
   const currentLayer = useMemo(
     () => GRAPH_LAYERS.find((l) => l.key === activeLayer) || GRAPH_LAYERS[4],
@@ -1458,11 +1457,11 @@ export default function DeepTaintGraphSection() {
   return (
     <section
       id="product-ast"
-      className="relative py-20 lg:py-28 bg-white border-b border-slate-200/80 overflow-hidden"
+      className="relative py-20 lg:py-28 bg-white dark:bg-[#0c0e12] border-b border-slate-200/80 dark:border-[#1e2330] overflow-hidden transition-colors duration-200"
     >
       {/* Subtle grid background pattern */}
       <div
-        className="absolute inset-0 opacity-[0.025]"
+        className="absolute inset-0 opacity-[0.025] dark:opacity-[0.05]"
         style={{
           backgroundImage:
             "radial-gradient(circle, #1e293b 1px, transparent 1px)",
@@ -1473,21 +1472,21 @@ export default function DeepTaintGraphSection() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center space-y-4 mb-14 lg:mb-18">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-mono font-semibold text-slate-700">
-            <Cpu className="w-3.5 h-3.5 text-slate-700" />
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-[#151820] border border-slate-200 dark:border-[#252b3b] text-xs font-mono font-semibold text-slate-700 dark:text-slate-300">
+            <Cpu className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
             <span>Deep Taint Graph Engine</span>
-            <span className="text-slate-400">·</span>
-            <span className="text-slate-500">Rust + petgraph</span>
+            <span className="text-slate-400 dark:text-slate-600">·</span>
+            <span className="text-slate-500 dark:text-slate-400">Rust + petgraph</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold text-slate-900 tracking-tight max-w-4xl mx-auto leading-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold text-slate-900 dark:text-white tracking-tight max-w-4xl mx-auto leading-tight">
             Five mathematical graph layers.{" "}
             <span className="bg-gradient-to-r from-rose-600 via-amber-500 to-emerald-600 bg-clip-text text-transparent">
               Zero false positives.
             </span>
           </h2>
 
-          <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
             Sentinel decomposes every function into compiler-grade intermediate
             representations — then tracks tainted values from untrusted sources
             to critical sinks across file and module boundaries.
@@ -1522,16 +1521,16 @@ export default function DeepTaintGraphSection() {
             <LayerDefinitionBanner layer={currentLayer} />
 
             {/* Interactive Canvas */}
-            <div className="relative rounded-xl border border-slate-200 bg-slate-50/50 overflow-hidden shadow-sm">
+            <div className="relative rounded-xl border border-slate-200 dark:border-[#252b3b] bg-slate-50/50 dark:bg-[#11141c]/50 overflow-hidden shadow-sm">
               {/* Canvas Header */}
-              <div className="px-4 py-2.5 bg-white border-b border-slate-200 flex items-center justify-between">
+              <div className="px-4 py-2.5 bg-white dark:bg-[#151820] border-b border-slate-200 dark:border-[#1e2330] flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
                     <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
                   </div>
-                  <span className="text-[11px] font-mono font-semibold text-slate-500 ml-2">
+                  <span className="text-[11px] font-mono font-semibold text-slate-500 dark:text-slate-400 ml-2">
                     sentinel-core::{currentLayer.key === "taint" ? "taint_graph" : `${currentLayer.key}_graph`} — Interactive {currentLayer.abbr} Canvas
                   </span>
                 </div>
@@ -1542,7 +1541,7 @@ export default function DeepTaintGraphSection() {
               </div>
 
               {/* Interactive Graph Canvas (Explicit 520px height) */}
-              <div className="h-[520px] w-full relative bg-gradient-to-br from-slate-50 via-white to-slate-50">
+              <div className="h-[520px] w-full relative bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#0c0e12] dark:via-[#11141c] dark:to-[#0c0e12]">
                 <ReactFlow
                   key={activeLayer}
                   nodes={activeGraphData.nodes}
@@ -1560,15 +1559,15 @@ export default function DeepTaintGraphSection() {
                     size={1}
                     color="#cbd5e1"
                   />
-                  <Controls className="!bg-white !border-slate-200 !shadow-sm !rounded-lg" />
+                  <Controls className="!bg-white dark:!bg-[#151820] !border-slate-200 dark:!border-[#252b3b] !shadow-sm !rounded-lg text-slate-800 dark:text-slate-200" />
                 </ReactFlow>
               </div>
 
               {/* Legend */}
-              <div className="px-4 py-2.5 bg-white border-t border-slate-200 flex flex-wrap items-center gap-4 text-[10px] font-mono text-slate-500">
+              <div className="px-4 py-2.5 bg-white dark:bg-[#151820] border-t border-slate-200 dark:border-[#1e2330] flex flex-wrap items-center gap-4 text-[10px] font-mono text-slate-500 dark:text-slate-400">
                 {[
                   { color: "bg-cyan-500", label: "Source" },
-                  { color: "bg-slate-700", label: "Propagator" },
+                  { color: "bg-slate-700 dark:bg-slate-500", label: "Propagator" },
                   { color: "bg-emerald-600", label: "Sanitizer" },
                   { color: "bg-rose-600", label: "Sink" },
                 ].map(({ color, label }) => (
@@ -1595,46 +1594,46 @@ export default function DeepTaintGraphSection() {
             <FindingDetailCard finding={DEMO_FINDING} />
 
             {/* Technical Highlights */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
-              <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <div className="rounded-xl border border-slate-200 dark:border-[#252b3b] bg-white dark:bg-[#151820] p-5 space-y-4">
+              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Zap className="w-4 h-4 text-amber-500" />
                 Engine Internals
               </h4>
               <div className="space-y-2.5">
                 {[
                   {
-                    icon: <Shield className="w-3.5 h-3.5 text-slate-500" />,
+                    icon: <Shield className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />,
                     title: "Arena-Allocated AST",
                     desc: "Zero-copy node lookups via contiguous Vec<AstNode> with O(1) indexed access",
                   },
                   {
-                    icon: <GitBranch className="w-3.5 h-3.5 text-slate-500" />,
+                    icon: <GitBranch className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />,
                     title: "SSA-based Reaching Definitions",
                     desc: "Gen/Kill fixed-point iteration to compute Def→Use chains across basic blocks",
                   },
                   {
-                    icon: <Network className="w-3.5 h-3.5 text-slate-500" />,
+                    icon: <Network className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />,
                     title: "Worklist Forward Propagation",
                     desc: "BFS-based taint spread over PDG data edges + call graph boundaries",
                   },
                   {
-                    icon: <Lock className="w-3.5 h-3.5 text-slate-500" />,
+                    icon: <Lock className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />,
                     title: "Sanitizer-Aware Path Pruning",
                     desc: "Recognized sanitizers intercept taint and suppress false-positive findings",
                   },
                 ].map((item) => (
                   <div
                     key={item.title}
-                    className="flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 transition"
+                    className="flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-[#1a1f2e] transition"
                   >
-                    <div className="p-1.5 rounded-md bg-slate-100 border border-slate-200 mt-0.5">
+                    <div className="p-1.5 rounded-md bg-slate-100 dark:bg-[#11141c] border border-slate-200 dark:border-[#252b3b] mt-0.5">
                       {item.icon}
                     </div>
                     <div>
-                      <div className="text-xs font-semibold text-slate-800">
+                      <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                         {item.title}
                       </div>
-                      <div className="text-[11px] text-slate-500 leading-relaxed mt-0.5">
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5">
                         {item.desc}
                       </div>
                     </div>
@@ -1644,7 +1643,7 @@ export default function DeepTaintGraphSection() {
             </div>
 
             {/* CTA */}
-            <div className="rounded-xl border border-slate-900 bg-slate-900 p-5 text-center space-y-3">
+            <div className="rounded-xl border border-slate-900 dark:border-[#252b3b] bg-slate-900 dark:bg-[#151820] p-5 text-center space-y-3">
               <h4 className="text-sm font-bold text-white">
                 Try the Graph Engine
               </h4>
@@ -1652,13 +1651,13 @@ export default function DeepTaintGraphSection() {
                 Install Sentinel CLI and generate all 5 graph layers for any
                 repository in sub-second latency.
               </p>
-              <div className="bg-slate-800 rounded-lg px-3 py-2 font-mono text-[11px] text-emerald-400 text-left border border-slate-700">
+              <div className="bg-slate-800 dark:bg-[#0c0e12] rounded-lg px-3 py-2 font-mono text-[11px] text-emerald-400 text-left border border-slate-700 dark:border-[#252b3b]">
                 <span className="text-slate-500 select-none">$ </span>
                 sentinel scan --deep-graph ./src
               </div>
               <button
                 type="button"
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-white text-slate-900 text-xs font-semibold hover:bg-slate-100 transition active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-white dark:bg-slate-100 text-slate-900 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-200 transition active:scale-95 cursor-pointer"
               >
                 <Terminal className="w-3.5 h-3.5" />
                 <span>View CLI Docs</span>
@@ -1669,12 +1668,12 @@ export default function DeepTaintGraphSection() {
         </div>
 
         {/* Bottom: Supported Rules Summary */}
-        <div className="mt-14 pt-10 border-t border-slate-200/80">
+        <div className="mt-14 pt-10 border-t border-slate-200/80 dark:border-[#1e2330]">
           <div className="text-center mb-6">
-            <h3 className="text-lg font-bold text-slate-900">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
               Built-in Taint Rules
             </h3>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Configurable Source → Sink patterns with sanitizer-aware
               interception
             </p>
@@ -1685,31 +1684,31 @@ export default function DeepTaintGraphSection() {
                 cwe: "CWE-89",
                 name: "SQL Injection",
                 severity: "Critical",
-                color: "border-red-200 bg-red-50/50",
+                color: "border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20",
               },
               {
                 cwe: "CWE-78",
                 name: "Command Injection",
                 severity: "Critical",
-                color: "border-red-200 bg-red-50/50",
+                color: "border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20",
               },
               {
                 cwe: "CWE-22",
                 name: "Path Traversal",
                 severity: "High",
-                color: "border-amber-200 bg-amber-50/50",
+                color: "border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20",
               },
               {
                 cwe: "CWE-918",
                 name: "SSRF",
                 severity: "High",
-                color: "border-amber-200 bg-amber-50/50",
+                color: "border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20",
               },
               {
                 cwe: "CWE-502",
                 name: "Insecure Deserialization",
                 severity: "High",
-                color: "border-amber-200 bg-amber-50/50",
+                color: "border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20",
               },
             ].map((rule) => (
               <div
@@ -1717,20 +1716,20 @@ export default function DeepTaintGraphSection() {
                 className={`rounded-lg border px-3.5 py-3 ${rule.color} flex flex-col gap-1.5`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono font-bold text-slate-700">
+                  <span className="text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300">
                     {rule.cwe}
                   </span>
                   <span
                     className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
                       rule.severity === "Critical"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-amber-100 text-amber-700"
+                        ? "bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400"
+                        : "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400"
                     }`}
                   >
                     {rule.severity}
                   </span>
                 </div>
-                <span className="text-xs font-semibold text-slate-800">
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                   {rule.name}
                 </span>
               </div>

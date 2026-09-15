@@ -69,9 +69,9 @@ export default function Hero({ onOpenDemo }: HeroProps) {
   };
 
   return (
-    <section className="relative overflow-hidden pt-8 pb-20 lg:pt-14 lg:pb-32 bg-slate-50 bg-grid-subtle">
+    <section className="relative overflow-hidden pt-8 pb-20 lg:pt-14 lg:pb-32 bg-slate-50 dark:bg-[#0c0e12] bg-grid-subtle transition-colors duration-200">
       {/* Subtle glowing ambient lighting in the background */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-gradient-to-tr from-slate-200/40 via-blue-100/30 to-indigo-100/20 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-gradient-to-tr from-slate-200/40 dark:from-slate-800/30 via-blue-100/30 dark:via-blue-900/20 to-indigo-100/20 dark:to-indigo-900/20 rounded-full blur-3xl pointer-events-none -z-10" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
@@ -84,25 +84,25 @@ export default function Hero({ onOpenDemo }: HeroProps) {
           <div className="lg:col-span-6 space-y-7 text-left z-10">
             {/* Top Pill / Badge */}
             <motion.div variants={itemSlideUp} className="inline-flex">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-200/80 shadow-sm text-xs font-medium text-slate-700">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white dark:bg-[#151820] border border-slate-200/80 dark:border-[#252b3b] shadow-sm text-xs font-medium text-slate-700 dark:text-slate-300">
                 <span className="flex h-2 w-2 relative">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                 </span>
-                <span className="font-semibold text-slate-900">Sentinel SAST 2.0</span>
-                <span className="text-slate-300">|</span>
-                <span className="text-slate-500 font-normal">
+                <span className="font-semibold text-slate-900 dark:text-slate-100">Sentinel SAST 2.0</span>
+                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <span className="text-slate-500 dark:text-slate-400 font-normal">
                   Zero False Positives by Design
                 </span>
-                <ArrowRight className="w-3 h-3 text-slate-400" />
+                <ArrowRight className="w-3 h-3 text-slate-400 dark:text-slate-500" />
               </div>
             </motion.div>
 
             {/* Main Headline */}
             <motion.div variants={itemSlideUp}>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.08] font-sans">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.08] font-sans">
                 Redefining code security.{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-slate-800 to-slate-600 block sm:inline">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-slate-800 to-slate-600 dark:from-slate-100 dark:via-slate-300 dark:to-slate-400 block sm:inline">
                   Verified with zero noise.
                 </span>
               </h1>
@@ -110,7 +110,7 @@ export default function Hero({ onOpenDemo }: HeroProps) {
 
             {/* Dense, Technical Explanatory Copy */}
             <motion.div variants={itemSlideUp}>
-              <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl font-normal">
+              <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl font-normal">
                 Sentinel replaces brittle legacy scanners with deep, interprocedural taint
                 analysis verified by deterministic reasoning engines. Integrate seamlessly
                 into your GitHub or GitLab CI/CD pipeline in under three minutes, delivering
@@ -126,41 +126,41 @@ export default function Hero({ onOpenDemo }: HeroProps) {
               <button
                 type="button"
                 onClick={onOpenDemo}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-slate-900 text-white font-medium text-sm hover:bg-slate-800 shadow-md hover:shadow-lg transition-all active:scale-95 group border border-slate-900"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-medium text-sm hover:bg-slate-800 dark:hover:bg-slate-200 shadow-md hover:shadow-lg transition-all active:scale-95 group border border-slate-900 dark:border-slate-100 cursor-pointer"
               >
                 <span>Start Free Trial</span>
-                <ArrowRight className="w-4 h-4 text-slate-300 group-hover:translate-x-0.5 transition-transform" />
+                <ArrowRight className="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:translate-x-0.5 transition-transform" />
               </button>
 
               <button
                 type="button"
                 onClick={onOpenDemo}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white text-slate-800 font-medium text-sm hover:bg-slate-50 border border-slate-300/80 shadow-sm hover:border-slate-400 transition active:scale-95"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white dark:bg-[#151820] text-slate-800 dark:text-slate-200 font-medium text-sm hover:bg-slate-50 dark:hover:bg-[#1a1f2e] border border-slate-300/80 dark:border-[#252b3b] shadow-sm hover:border-slate-400 dark:hover:border-slate-600 transition active:scale-95 cursor-pointer"
               >
-                <Play className="w-3.5 h-3.5 fill-slate-700 text-slate-700" />
+                <Play className="w-3.5 h-3.5 fill-slate-700 dark:fill-slate-300 text-slate-700 dark:text-slate-300" />
                 <span>Book a Technical Demo</span>
               </button>
             </motion.div>
 
             {/* CLI Quickstart Strip */}
             <motion.div variants={itemSlideUp} className="pt-2">
-              <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-sm max-w-lg">
-                <div className="flex items-center justify-between gap-2 px-2 text-xs font-mono text-slate-600">
+              <div className="p-2.5 rounded-xl bg-white dark:bg-[#151820] border border-slate-200 dark:border-[#252b3b] shadow-sm max-w-lg">
+                <div className="flex items-center justify-between gap-2 px-2 text-xs font-mono text-slate-600 dark:text-slate-400">
                   <div className="flex items-center gap-2 overflow-x-auto select-all">
-                    <span className="text-slate-400 select-none">$</span>
-                    <span className="text-slate-800 font-medium truncate">
+                    <span className="text-slate-400 dark:text-slate-500 select-none">$</span>
+                    <span className="text-slate-800 dark:text-slate-200 font-medium truncate">
                       {cliCommand}
                     </span>
                   </div>
                   <button
                     onClick={handleCopyCli}
-                    className="shrink-0 p-1.5 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition flex items-center gap-1 text-[11px]"
+                    className="shrink-0 p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-[#1a1f2e] text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition flex items-center gap-1 text-[11px] cursor-pointer"
                     title="Copy command"
                   >
                     {copiedCli ? (
                       <>
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        <span className="text-emerald-600 font-sans">Copied!</span>
+                        <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <span className="text-emerald-600 dark:text-emerald-400 font-sans">Copied!</span>
                       </>
                     ) : (
                       <>
@@ -176,18 +176,18 @@ export default function Hero({ onOpenDemo }: HeroProps) {
             {/* Trust Metrics & Social Proof */}
             <motion.div
               variants={itemSlideUp}
-              className="pt-4 border-t border-slate-200/80 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-slate-500"
+              className="pt-4 border-t border-slate-200/80 dark:border-[#1e2330] flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-slate-500 dark:text-slate-400"
             >
-              <div className="flex items-center gap-1.5 font-medium text-slate-700">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <div className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span>SOC 2 Type II Certified</span>
               </div>
-              <div className="flex items-center gap-1.5 font-medium text-slate-700">
-                <Zap className="w-4 h-4 text-amber-600" />
+              <div className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                <Zap className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                 <span>Sub-second Scan Latency</span>
               </div>
-              <div className="flex items-center gap-1.5 font-medium text-slate-700">
-                <Lock className="w-4 h-4 text-blue-600" />
+              <div className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                <Lock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 <span>Zero Code Telemetry Retained</span>
               </div>
             </motion.div>
@@ -198,7 +198,7 @@ export default function Hero({ onOpenDemo }: HeroProps) {
             {/* Background 3D Spline Asset Container */}
             <motion.div
               variants={splineEntrance}
-              className="w-full h-full max-w-lg lg:max-w-none rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden"
+              className="w-full h-full max-w-lg lg:max-w-none rounded-2xl border border-slate-200/80 dark:border-[#1e2330] bg-white dark:bg-[#11141c] shadow-sm overflow-hidden"
             >
               <SplineScene />
             </motion.div>

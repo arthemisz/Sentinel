@@ -46,8 +46,9 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased scroll-smooth`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans bg-slate-50 text-slate-900 antialiased selection:bg-slate-900 selection:text-white">
+      <body className="min-h-full flex flex-col font-sans bg-slate-50 text-slate-900 dark:bg-[#0c0e12] dark:text-slate-200 antialiased selection:bg-slate-900 selection:text-white dark:selection:bg-slate-200 dark:selection:text-slate-900 transition-colors duration-300">
         <Providers>{children}</Providers>
       </body>
     </html>

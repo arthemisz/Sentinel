@@ -39,7 +39,7 @@ export default function HomeClientWrapper({ gitHubSignInSlot }: HomeClientWrappe
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 selection:bg-slate-900 selection:text-white font-sans text-slate-900">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#0c0e12] selection:bg-slate-900 selection:text-white dark:selection:bg-slate-100 dark:selection:text-slate-900 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
       {/* Pinned Sticky Glassmorphic Navigation */}
       <Navbar onOpenDemo={handleOpenDemo} onOpenSignIn={handleOpenSignIn} />
 
@@ -67,18 +67,18 @@ export default function HomeClientWrapper({ gitHubSignInSlot }: HomeClientWrappe
         <ComparisonMatrix />
 
         {/* High-Impact Pre-Footer Conversion Banner */}
-        <section className="py-20 lg:py-24 bg-white border-b border-slate-200/80 relative overflow-hidden">
+        <section className="py-20 lg:py-24 bg-white dark:bg-[#11141c] border-b border-slate-200/80 dark:border-[#1e2330] relative overflow-hidden transition-colors duration-200">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-mono text-slate-700">
-              <Sparkles className="w-3.5 h-3.5 text-slate-700" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-[#1a1f2e] border border-slate-200 dark:border-[#252b3b] text-xs font-mono text-slate-700 dark:text-slate-300">
+              <Sparkles className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
               <span>Deploy in 3 minutes</span>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight max-w-3xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight max-w-3xl mx-auto">
               Ready to eliminate false positives from your security pipeline?
             </h2>
 
-            <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
               Join hypergrowth engineering teams who have replaced noisy alerts with
               deterministic, developer-first code fixes.
             </p>
@@ -87,7 +87,7 @@ export default function HomeClientWrapper({ gitHubSignInSlot }: HomeClientWrappe
               <button
                 type="button"
                 onClick={handleOpenDemo}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-slate-900 text-white font-medium text-sm hover:bg-slate-800 shadow-md hover:shadow-lg transition-all active:scale-95 border border-slate-900 cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-medium text-sm hover:bg-slate-800 dark:hover:bg-slate-200 shadow-md hover:shadow-lg transition-all active:scale-95 border border-slate-900 dark:border-slate-100 cursor-pointer"
               >
                 <span>Book a Technical Demo</span>
                 <ArrowRight className="w-4 h-4" />
@@ -96,23 +96,23 @@ export default function HomeClientWrapper({ gitHubSignInSlot }: HomeClientWrappe
               <button
                 type="button"
                 onClick={handleOpenSignIn}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-white text-slate-800 font-medium text-sm hover:bg-slate-50 border border-slate-300 shadow-sm transition active:scale-95 cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-white dark:bg-[#151820] text-slate-800 dark:text-slate-200 font-medium text-sm hover:bg-slate-50 dark:hover:bg-[#1a1f2e] border border-slate-300 dark:border-[#252b3b] shadow-sm transition active:scale-95 cursor-pointer"
               >
                 <span>Sign In with GitHub</span>
               </button>
             </div>
 
-            <div className="pt-4 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500 font-medium">
+            <div className="pt-4 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500 dark:text-slate-400 font-medium">
               <span className="flex items-center gap-1.5">
-                <Check className="w-4 h-4 text-emerald-600" />
+                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 No credit card required
               </span>
               <span className="flex items-center gap-1.5">
-                <Check className="w-4 h-4 text-emerald-600" />
+                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 Zero code retention
               </span>
               <span className="flex items-center gap-1.5">
-                <Check className="w-4 h-4 text-emerald-600" />
+                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 Works with existing GitHub/GitLab CI
               </span>
             </div>

@@ -48,8 +48,16 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased scroll-smooth`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans bg-slate-50 text-slate-900 dark:bg-[#0c0e12] dark:text-slate-200 antialiased selection:bg-slate-900 selection:text-white dark:selection:bg-slate-200 dark:selection:text-slate-900 transition-colors duration-300">
-        <Providers>{children}</Providers>
+      <body className="min-h-full flex flex-col font-sans bg-white text-slate-900 dark:bg-black dark:text-white relative overflow-x-hidden antialiased selection:bg-yellow-500/30 selection:text-slate-900 dark:selection:text-white">
+        {/* Subtle Edge-to-Edge Wireframe Grid Pattern */}
+        <div className="fixed inset-0 bg-wireframe-grid pointer-events-none z-0" />
+
+        {/* Screen-wide CSS Noise / Grain Overlay */}
+        <div className="fixed inset-0 bg-grain-noise opacity-[0.015] dark:opacity-[0.035] pointer-events-none z-50 mix-blend-multiply dark:mix-blend-screen" />
+
+        <div className="relative z-10 flex flex-col min-h-full">
+          <Providers>{children}</Providers>
+        </div>
       </body>
     </html>
   );

@@ -20,7 +20,13 @@ export function ThemeToggle() {
   const isDark = resolvedTheme === "dark";
 
   return (
-    <div className="relative flex items-center h-8 w-[68px] rounded-full bg-slate-100 dark:bg-[#1a1f2e] border border-slate-200 dark:border-[#252b3b] p-0.5 cursor-pointer">
+    <div
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className="relative flex items-center h-8 w-[68px] rounded-full bg-slate-100 dark:bg-[#1a1f2e] border border-slate-200 dark:border-[#252b3b] p-0.5 cursor-pointer select-none"
+      role="switch"
+      aria-checked={isDark}
+      aria-label="Toggle theme"
+    >
       {/* Sliding indicator */}
       <motion.div
         className="absolute h-7 w-[32px] rounded-full bg-white dark:bg-[#252b3b] shadow-sm"
@@ -31,13 +37,16 @@ export function ThemeToggle() {
       {/* Sun button */}
       <button
         type="button"
-        onClick={() => setTheme("light")}
+        onClick={(e) => {
+          e.stopPropagation();
+          setTheme("light");
+        }}
         className="relative z-10 flex items-center justify-center h-7 w-[32px] rounded-full cursor-pointer"
         aria-label="Light mode"
       >
         <Sun
           className={`w-[15px] h-[15px] transition-colors duration-200 ${
-            isDark ? "text-slate-500" : "text-amber-500"
+            isDark ? "text-slate-400" : "text-amber-500"
           }`}
         />
       </button>
@@ -45,7 +54,10 @@ export function ThemeToggle() {
       {/* Moon button */}
       <button
         type="button"
-        onClick={() => setTheme("dark")}
+        onClick={(e) => {
+          e.stopPropagation();
+          setTheme("dark");
+        }}
         className="relative z-10 flex items-center justify-center h-7 w-[32px] rounded-full cursor-pointer"
         aria-label="Dark mode"
       >

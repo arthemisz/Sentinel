@@ -75,18 +75,22 @@ Evaluating candidate path: CWE-89 (SQL Injection)
   ];
 
   return (
-    <section className="py-20 lg:py-28 bg-slate-50 dark:bg-[#0c0e12] transition-colors duration-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="how-it-works" className="py-20 lg:py-28 bg-white dark:bg-black relative border-b border-slate-200 dark:border-white/10 transition-colors duration-200 overflow-hidden">
+      {/* Ambient Gradients */}
+      <div className="absolute top-0 left-1/3 w-[600px] h-[600px] rounded-full bg-purple-200/30 dark:bg-purple-900/15 blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] rounded-full bg-amber-200/25 dark:bg-yellow-700/10 blur-[150px] pointer-events-none" />
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Title */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white dark:bg-[#151820] border border-slate-200 dark:border-[#252b3b] text-xs font-mono text-slate-700 dark:text-slate-300 shadow-sm">
-            <Zap className="w-3.5 h-3.5 text-amber-500" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-mono text-slate-700 dark:text-gray-300 shadow-sm">
+            <Zap className="w-3.5 h-3.5 text-amber-600 dark:text-yellow-400" />
             <span>The Sentinel Engine</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             How Sentinel Eliminates False Positives
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 text-base sm:text-lg">
+          <p className="text-slate-600 dark:text-gray-400 font-mono text-sm sm:text-base">
             Traditional SAST relies on brittle regex patterns. Sentinel combines semantic graph
             theory with local LLM reasoning to ensure only verified, actionable vulnerabilities reach your team.
           </p>
@@ -100,34 +104,34 @@ Evaluating candidate path: CWE-89 (SQL Injection)
               onClick={() => setActiveStep(idx)}
               className={`p-6 rounded-2xl text-left border transition-all duration-200 flex flex-col justify-between cursor-pointer ${
                 activeStep === idx
-                  ? "bg-white dark:bg-[#151820] border-slate-900 dark:border-slate-300 shadow-lg scale-[1.01]"
-                  : "bg-white/60 dark:bg-[#11141c]/60 border-slate-200/80 dark:border-[#1e2330] hover:bg-white dark:hover:bg-[#151820] hover:border-slate-300 dark:hover:border-[#2b354c]"
+                  ? "bg-amber-500/10 dark:bg-white/10 border-amber-500/50 dark:border-yellow-500/50 shadow-md scale-[1.01]"
+                  : "bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 hover:bg-slate-100/80 dark:hover:bg-white/5 hover:border-slate-300 dark:hover:border-white/20"
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-mono font-bold text-slate-400 dark:text-slate-500">
+                  <span className="text-xs font-mono font-bold text-slate-400 dark:text-gray-400">
                     {step.number}
                   </span>
                   <span
                     className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
                       idx === 1
-                        ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/40"
-                        : "bg-slate-100 dark:bg-[#1f2637] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-[#2b354c]"
+                        ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40"
+                        : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-gray-300 border-slate-200 dark:border-white/10"
                     }`}
                   >
                     {step.badge}
                   </span>
                 </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-2">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
                   {step.title}
                 </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-3">
+                <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed line-clamp-3 font-mono">
                   {step.description}
                 </p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-[#1e2330] flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-slate-200">
+              <div className="mt-4 pt-3 border-t border-slate-200 dark:border-white/10 flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-yellow-400">
                 <span>View Engine Stage</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </div>
@@ -136,10 +140,10 @@ Evaluating candidate path: CWE-89 (SQL Injection)
         </div>
 
         {/* Interactive Step Detail Card */}
-        <div className="bg-white dark:bg-[#151820] border border-slate-200 dark:border-[#252b3b] rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white dark:bg-white/[0.03] backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl dark:shadow-2xl overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-12">
             {/* Left Detail Panel */}
-            <div className="lg:col-span-5 p-8 lg:p-10 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-[#1e2330]">
+            <div className="lg:col-span-5 p-8 lg:p-10 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-white/10">
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-slate-400">
                   <span className="w-2 h-2 rounded-full bg-emerald-500" />

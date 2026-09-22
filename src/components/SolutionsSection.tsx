@@ -81,24 +81,28 @@ export default function SolutionsSection({ onOpenDemo }: SolutionsSectionProps) 
   const current = tabs.find((t) => t.id === activeTab) || tabs[0];
 
   return (
-    <section id="solutions-leaders" className="py-20 lg:py-28 bg-slate-50 dark:bg-[#0c0e12] border-b border-slate-200/80 dark:border-[#1e2330] transition-colors duration-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="solutions-leaders" className="py-20 lg:py-28 bg-white dark:bg-black relative border-b border-slate-200 dark:border-white/10 transition-colors duration-200 overflow-hidden">
+      {/* Ambient Gradients from proj */}
+      <div className="absolute top-0 right-1/3 w-[600px] h-[600px] rounded-full bg-purple-200/30 dark:bg-purple-900/15 blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-0 left-1/3 w-[600px] h-[600px] rounded-full bg-amber-200/25 dark:bg-yellow-700/10 blur-[150px] pointer-events-none" />
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white dark:bg-[#151820] border border-slate-200 dark:border-[#252b3b] text-xs font-mono text-slate-700 dark:text-slate-300 shadow-sm">
-            <ShieldAlert className="w-3.5 h-3.5 text-slate-800 dark:text-slate-300" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-mono text-slate-700 dark:text-gray-300 shadow-sm">
+            <ShieldAlert className="w-3.5 h-3.5 text-amber-600 dark:text-yellow-400" />
             <span>Tailored Solutions</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             Security That Unites Engineering & Security Teams
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 text-base sm:text-lg">
+          <p className="text-slate-600 dark:text-gray-400 font-mono text-sm sm:text-base">
             Whether you are reporting to the board, triaging zero-days, or shipping features at breakneck velocity, Sentinel adapts to your role.
           </p>
         </div>
 
         {/* Role Selector Pills */}
         <div className="flex justify-center mb-10">
-          <div className="inline-flex p-1.5 rounded-xl bg-white dark:bg-[#151820] border border-slate-200/80 dark:border-[#252b3b] shadow-sm">
+          <div className="inline-flex p-1.5 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -106,10 +110,10 @@ export default function SolutionsSection({ onOpenDemo }: SolutionsSectionProps) 
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition cursor-pointer ${
+                  className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-mono font-medium transition cursor-pointer ${
                     isActive
-                      ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-[#1a1f2e]"
+                      ? "bg-gradient-to-r from-yellow-500 to-amber-500 text-black font-bold shadow-md"
+                      : "text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-white/5"
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -121,7 +125,7 @@ export default function SolutionsSection({ onOpenDemo }: SolutionsSectionProps) 
         </div>
 
         {/* Main Content Box */}
-        <div className="bg-white dark:bg-[#151820] border border-slate-200 dark:border-[#252b3b] rounded-2xl shadow-xl p-8 lg:p-12">
+        <div className="bg-white dark:bg-white/[0.03] backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl dark:shadow-2xl p-8 lg:p-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             {/* Left Description & Features */}
             <div className="lg:col-span-7 space-y-6">

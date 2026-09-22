@@ -2,51 +2,59 @@
 
 import React from "react";
 import Link from "next/link";
-import { Shield } from "lucide-react";
+import Image from "next/image";
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-50 dark:bg-[#08090d] border-t border-slate-200 dark:border-[#1e2330] text-slate-600 dark:text-slate-400 text-xs transition-colors duration-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <footer className="bg-white dark:bg-black border-t border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-400 text-xs relative overflow-hidden">
+      {/* Ambient Gradients */}
+      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-purple-200/20 dark:bg-purple-900/15 blur-[150px] pointer-events-none" />
+      <div className="absolute top-0 left-0 w-[500px] h-[500px] rounded-full bg-amber-200/20 dark:bg-yellow-700/10 blur-[150px] pointer-events-none" />
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 font-mono">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 lg:gap-12">
           {/* Brand & Status Column */}
           <div className="col-span-2 space-y-4">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center">
-                <Shield className="w-4 h-4 text-emerald-400 dark:text-emerald-600 fill-emerald-400/20 dark:fill-emerald-600/20" />
-              </div>
-              <span className="font-bold text-base tracking-tight text-slate-900 dark:text-slate-100 font-sans">
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <Image
+                src="/Trademark.svg"
+                alt="Sentinel Logo"
+                width={34}
+                height={27}
+                className="h-7 w-auto object-contain transition-transform group-hover:scale-105"
+              />
+              <span className="font-bold text-base tracking-tight text-slate-900 dark:text-white font-sans">
                 Sentinel SAST
               </span>
             </Link>
 
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-gray-400 max-w-sm leading-relaxed">
               The high-contrast, zero-false-positive static application security testing platform.
               Engineered for velocity, verified by deterministic reasoning.
             </p>
 
             {/* Live Operational Status Badge */}
             <div className="pt-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white dark:bg-[#151820] border border-slate-200 dark:border-[#252b3b] shadow-sm text-[11px] font-mono text-slate-700 dark:text-slate-300">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm text-[11px] text-slate-700 dark:text-gray-300">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                 </span>
                 <span>All Systems Operational</span>
-                <span className="text-slate-300 dark:text-slate-600">|</span>
-                <span className="text-slate-400 dark:text-slate-500">99.99% Uptime</span>
+                <span className="text-slate-300 dark:text-gray-600">|</span>
+                <span className="text-slate-500 dark:text-gray-400">99.99% Uptime</span>
               </div>
             </div>
 
             {/* Compliance certifications */}
-            <div className="flex flex-wrap items-center gap-2 pt-1 text-[10px] font-mono text-slate-500 dark:text-slate-400">
-              <span className="px-2 py-0.5 rounded bg-slate-200/70 dark:bg-[#151820] border border-slate-300/80 dark:border-[#252b3b]">
+            <div className="flex flex-wrap items-center gap-2 pt-1 text-[10px]">
+              <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300">
                 SOC 2 TYPE II
               </span>
-              <span className="px-2 py-0.5 rounded bg-slate-200/70 dark:bg-[#151820] border border-slate-300/80 dark:border-[#252b3b]">
+              <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300">
                 ISO/IEC 27001
               </span>
-              <span className="px-2 py-0.5 rounded bg-slate-200/70 dark:bg-[#151820] border border-slate-300/80 dark:border-[#252b3b]">
+              <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300">
                 GDPR COMPLIANT
               </span>
             </div>

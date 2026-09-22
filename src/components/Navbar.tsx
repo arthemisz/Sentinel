@@ -2,10 +2,10 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { signOut, useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Shield,
   Terminal,
   Cloud,
   Code2,
@@ -122,22 +122,27 @@ export default function Navbar({ onOpenDemo, onOpenSignIn }: NavbarProps) {
       ref={navRef}
       className={`sticky top-0 z-50 w-full transition-all duration-300 border-b ${
         scrolled
-          ? "bg-white/90 backdrop-blur-md border-slate-200/90 shadow-sm dark:bg-[#0c0e12]/90 dark:border-[#1e2330]/90 dark:shadow-none"
-          : "bg-white/80 backdrop-blur-md border-slate-200/60 dark:bg-[#0c0e12]/80 dark:border-[#1e2330]/60"
+          ? "bg-white/90 dark:bg-black/90 backdrop-blur-xl border-slate-200/80 dark:border-white/10 shadow-lg shadow-slate-200/50 dark:shadow-2xl dark:shadow-black/80"
+          : "bg-white/80 dark:bg-black/75 backdrop-blur-lg border-slate-200/80 dark:border-white/10"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Left: Sentinel Logo paired with Shield Icon */}
+        {/* Left: Sentinel Logo */}
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-lg bg-slate-900 dark:bg-slate-100 text-white flex items-center justify-center shadow-sm group-hover:bg-slate-800 dark:group-hover:bg-slate-200 transition-colors">
-              <Shield className="w-5 h-5 text-emerald-400 dark:text-emerald-600 fill-emerald-400/20 dark:fill-emerald-600/20 transition-transform group-hover:scale-105" />
-            </div>
+            <Image
+              src="/Trademark.svg"
+              alt="Sentinel Logo"
+              width={34}
+              height={27}
+              className="h-7 w-auto object-contain transition-transform group-hover:scale-105"
+              priority
+            />
             <div className="flex items-baseline gap-1.5">
-              <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-slate-100 font-sans">
+              <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white font-sans">
                 Sentinel
               </span>
-              <span className="text-[10px] font-mono font-semibold uppercase px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#1a1f2e] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-[#252b3b]">
+              <span className="text-[10px] font-mono font-semibold uppercase px-1.5 py-0.5 rounded bg-amber-50 dark:bg-white/10 text-amber-700 dark:text-yellow-400 border border-amber-300/50 dark:border-yellow-500/20">
                 SAST
               </span>
             </div>
@@ -562,7 +567,7 @@ export default function Navbar({ onOpenDemo, onOpenSignIn }: NavbarProps) {
             <button
               type="button"
               onClick={onOpenSignIn}
-              className="px-3.5 py-1.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-full text-xs font-mono tracking-wider text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
             >
               Sign In
             </button>
@@ -571,7 +576,7 @@ export default function Navbar({ onOpenDemo, onOpenSignIn }: NavbarProps) {
           <button
             type="button"
             onClick={onOpenDemo}
-            className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 shadow-sm transition active:scale-95 border border-slate-800 dark:border-slate-200 cursor-pointer"
+            className="inline-flex items-center justify-center px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-yellow-500 via-amber-500 to-yellow-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.25)] hover:opacity-90 active:scale-95 transition-all cursor-pointer"
           >
             Book a Demo
           </button>

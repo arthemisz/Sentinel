@@ -97,3 +97,51 @@ func TestKnightProgress_Update_100PercentAndComplete(t *testing.T) {
 		t.Errorf("expected complete output to show final message")
 	}
 }
+
+func TestKnightProgress_InPlaceTerminalRedraw(t *testing.T) {
+	var buf bytes.Buffer
+	kp := NewKnightProgressWithWriter(&buf)
+	// Force terminal mode to verify ANSI cursor rewind and clear-line sequences
+	kp.isTerm = true
+
+	// Frame 1: 0%
+	kp.Update(0.0, "Starting scan...")
+	frame1 := buf.String()
+	if strings.Contains(frame1, "\033[20A") {
+		t.Errorf("frame 1 should not rewind cursor on first draw")
+	}
+	if !strings.Contains(frame1, "\r\033[2K") {
+		t.Errorf("frame 1 in terminal mode should clear lines with \\r\\033[2K")
+	}
+
+	buf.Reset()
+
+	// Frame 2: 50%
+	kp.Update(50.0, "Parsing files...")
+	frame2 := buf.String()
+	// Must rewind cursor up 20 lines to overwrite in-place
+	if !strings.Contains(frame2, "\r\033[20A") {
+		t.Errorf("frame 2 must emit \\r\\033[20A to rewind cursor in-place, got: %q", frame2)
+	}
+	if !strings.Contains(frame2, "50%") {
+		t.Errorf("frame 2 must contain 50%%")
+	}
+
+	buf.Reset()
+
+	// Frame 3: Complete
+	kp.Complete("Scan completed successfully")
+	frame3 := buf.String()
+	if !strings.Contains(frame3, "\r\033[20A") {
+		t.Errorf("complete frame must emit \\r\\033[20A to overwrite in-place")
+	}
+	if !strings.Contains(frame3, ShowCursor) {
+		t.Errorf("complete frame must restore cursor with ShowCursor")
+	}
+	if !strings.Contains(frame3, "100%") {
+		t.Errorf("complete frame must contain 100%%")
+	}
+	if !strings.Contains(frame3, "Scan completed successfully") {
+		t.Errorf("complete frame must contain final message")
+	}
+}
